@@ -187,7 +187,7 @@ char *get_memory() {
     }
 
     /* We parse through all lines of meminfo and scan for the information we need */
-    char *line = malloc(BUF_SIZE);
+    char *line = NULL; // allocation handled automatically by getline()
     size_t len; /* unused */
 
     /* parse until EOF */
