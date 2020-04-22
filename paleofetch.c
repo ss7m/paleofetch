@@ -41,6 +41,26 @@ struct sysinfo my_sysinfo;
 int title_length;
 int status;
 
+void strip_spaces(char *s) {
+    int i = 0;
+    int j;
+    
+    while (s[i] != '\0') {
+        if (s[i] == ' ') {
+            if (s[i+1] == ' ') {
+                j = i + 1;
+                do {
+                    s[j] = s[j+1];
+                } while (s[++j] != '\0');
+            } else {
+                ++i;
+            }
+        } else {
+            ++i;
+        }
+    }
+}
+
 void halt_and_catch_fire(const char *message) {
     if(status != 0) {
         printf("%s\n", message);
@@ -176,6 +196,40 @@ char *get_resolution() {
     return resolution;
 }
 
+char *get_cpu() {
+    char cpu_name[50];
+    char *cpu_model;
+    char *cpu_frequency;
+    int cores;    
+
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* get infomation from cpuinfo */
+
+    /* We parse through all lines of cpuinfo and scan for the information we need */
+    char *line = NULL;
+    size_t len; /* unused */
+
+    /* parse until EOF */
+    while (getline(&line, &len, cpuinfo) != -1) {
+        /* if sscanf doesn't find a match, pointer is untouched */
+        sscanf(line, "processor : %d", &cores);
+        sscanf(line, "model name : %[^\n]", cpu_name);
+    }
+
+    free(line);
+
+    fclose(cpuinfo);
+
+    strip_spaces(cpu_name);
+    cpu_model = strtok(cpu_name, "@");
+    cpu_frequency = strtok(NULL, "@");
+    
+    char *cpu = malloc(BUF_SIZE);
+    //snprintf(cpu, BUF_SIZE, "%s (%d)", cpu_name, cores + 1);
+    snprintf(cpu, BUF_SIZE, "%s(%d) @%s", cpu_model, cores + 1, cpu_frequency);
+
+    return cpu;
+}
+
 char *get_memory() {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
@@ -252,11 +306,12 @@ int main() {
     char *packages = get_packages();
     char *shell = get_shell();
     char *resolution = get_resolution();
+    char *cpu = get_cpu();
     char *memory = get_memory();
     char *colors1 = get_colors1();
     char *colors2 = get_colors2();
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", "CPU", "GPU", memory, colors1, colors2);
+    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", cpu, "GPU", memory, colors1, colors2);
 
     free(title);
     free(bar);
@@ -267,6 +322,7 @@ int main() {
     free(packages);
     free(shell);
     free(resolution);
+    free(cpu);
     free(memory);
     free(colors1);
     free(colors2);
