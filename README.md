@@ -1,8 +1,8 @@
 paleofetch
 ==========
 
-Like neofetch, but incomplete, written in ~300 lines of C instead of 10,000 lines of bash,
-and runs in like 0.005 seconds.
+Like neofetch, but incomplete, written in ~350 lines of C instead of 10,000 lines of bash,
+and runs in like 0.01 seconds.
 
 This is a WIP, and definitely not a minimum viable product. Currently it only supports Arch Linux with X running. 
 
