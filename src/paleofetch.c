@@ -181,6 +181,10 @@ char *get_memory() {
     int total, shared, memfree, buffers, cached, reclaimable;
 
     FILE *meminfo = fopen("/proc/meminfo", "r"); /* get infomation from meminfo */
+    if(meminfo == NULL) {
+        status = -1;
+        halt_and_catch_fire("Unable to open meminfo");
+    }
     
     /* We parse through all lines of meminfo and scan for the information we need */
     char *line = malloc(BUF_SIZE);
@@ -204,9 +208,10 @@ char *get_memory() {
     /* use same calculation as neofetch */
     used_memory = (total + shared - memfree - buffers - cached - reclaimable) / 1024;
     total_memory = total / 1024;
+    int percentage = (int) (100 * (used_memory / (double) total_memory));
 
     char *memory = malloc(BUF_SIZE);
-    snprintf(memory, BUF_SIZE, "%dMiB / %dMiB", used_memory, total_memory);
+    snprintf(memory, BUF_SIZE, "%dMiB / %dMiB (%d%%)", used_memory, total_memory, percentage);
 
     return memory;
 }
