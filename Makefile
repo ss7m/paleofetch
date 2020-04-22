@@ -1,15 +1,15 @@
 CFLAGS=-O3 -Wall -Wextra
 PREFIX=$(HOME)/.local
 
-all: fetch
+all: paleofetch
 
 clean:
 	rm -f fetch
 
-fetch: fetch.c
-	$(CC) fetch.c -o fetch $(CFLAGS)
-	strip fetch
+paleofetch: paleofetch.c
+	$(CC) paleofetch.c -o paleofetch $(CFLAGS)
+	strip paleofetch
 
-install: fetch
+install: paleofetch
 	mkdir -p $(PREFIX)/bin
-	install ./fetch $(PREFIX)/bin/fetch
+	install ./paleofetch $(PREFIX)/bin/paleofetch
