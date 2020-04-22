@@ -5,33 +5,32 @@
 #include <dirent.h>
 
 #include <sys/utsname.h>
-#include <sys/sysinfo.h> // man 2 sysinfo
+#include <sys/sysinfo.h>
 
 #define DISTRO "Arch"
 #define BUF_SIZE 150
 
 #define FORMAT_STR \
-"\x1b[1;36m                  -`                    \x1b[0m%s\n"\
-"\x1b[1;36m                 .o+`                   \x1b[0m%s\n"\
-"\x1b[1;36m                `ooo/                   OS: \x1b[0m%s\n"\
-"\x1b[1;36m               `+oooo:                  Host: \x1b[0m%s\n"\
-"\x1b[1;36m              `+oooooo:                 Kernel: \x1b[0m%s\n"\
-"\x1b[1;36m              -+oooooo+:                Uptime: \x1b[0m%s\n"\
-"\x1b[1;36m            `/:-:++oooo+:\n"\
-"\x1b[1;36m           `/++++/+++++++:              Packages: \x1b[0m%s\n"\
-"\x1b[1;36m          `/++++++++++++++:             Shell: \x1b[0m%s\n"\
-"\x1b[1;36m         `/+++ooooooooooooo/`           Resolution: \x1b[0m%s\n"\
-"\x1b[1;36m        ./ooosssso++osssssso+`          Terminal: \x1b[0m%s\n"\
-"\x1b[1;36m       .oossssso-````/ossssss+`\n"\
-"\x1b[1;36m      -osssssso.      :ssssssso.        CPU: \x1b[0m%s\n"\
-"\x1b[1;36m     :osssssss/        osssso+++.       GPU: \x1b[0m%s\n"\
-"\x1b[1;36m    /ossssssss/        +ssssooo/-       Memory: \x1b[0m%s\n"\
-"\x1b[1;36m  `/ossssso+/:-        -:/+osssso+-\n"\
-"\x1b[1;36m `+sso+:-`                 `.-/+oso:    %s\n"\
-"\x1b[1;36m`++:.                           `-/+/   %s\n"\
-"\x1b[1;36m.`                                 `/\x1b[0m\n\n"
+"\e[1;36m                  -`                    \e[0m%s\n"\
+"\e[1;36m                 .o+`                   \e[0m%s\n"\
+"\e[1;36m                `ooo/                   OS: \e[0m%s\n"\
+"\e[1;36m               `+oooo:                  Host: \e[0m%s\n"\
+"\e[1;36m              `+oooooo:                 Kernel: \e[0m%s\n"\
+"\e[1;36m              -+oooooo+:                Uptime: \e[0m%s\n"\
+"\e[1;36m            `/:-:++oooo+:\n"\
+"\e[1;36m           `/++++/+++++++:              Packages: \e[0m%s\n"\
+"\e[1;36m          `/++++++++++++++:             Shell: \e[0m%s\n"\
+"\e[1;36m         `/+++ooooooooooooo/`           Resolution: \e[0m%s\n"\
+"\e[1;36m        ./ooosssso++osssssso+`          Terminal: \e[0m%s\n"\
+"\e[1;36m       .oossssso-````/ossssss+`\n"\
+"\e[1;36m      -osssssso.      :ssssssso.        CPU: \e[0m%s\n"\
+"\e[1;36m     :osssssss/        osssso+++.       GPU: \e[0m%s\n"\
+"\e[1;36m    /ossssssss/        +ssssooo/-       Memory: \e[0m%s\n"\
+"\e[1;36m  `/ossssso+/:-        -:/+osssso+-\n"\
+"\e[1;36m `+sso+:-`                 `.-/+oso:    %s\n"\
+"\e[1;36m`++:.                           `-/+/   %s\n"\
+"\e[1;36m.`                                 `/\e[0m\n\n"
 
-// TODO: error checking
 // TODO: Finish it
 
 struct utsname uname_info;
@@ -183,8 +182,10 @@ char *get_colors2() {
 }
 
 int main() {
-    uname(&uname_info);
-    sysinfo(&my_sysinfo);
+    status = uname(&uname_info);
+    halt_and_catch_fire("uname failed");
+    status = sysinfo(&my_sysinfo);
+    halt_and_catch_fire("sysinfo failed");
 
     char *title = get_title();
     char *bar = get_bar();
