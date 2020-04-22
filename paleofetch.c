@@ -152,7 +152,7 @@ char *get_packages() {
 
 char *get_shell() {
     char *shell = malloc(BUF_SIZE);
-    sscanf(getenv("SHELL"), "/bin/%s", shell);
+    strcpy(shell, strrchr(getenv("SHELL"), '/') + 1);
     return shell;
 }
 
