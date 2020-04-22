@@ -10,6 +10,7 @@
 #define DISTRO "Arch"
 #define BUF_SIZE 150
 
+// I copy pasted this from neofetch, in case you were curious
 #define FORMAT_STR \
 "\e[1;36m                  -`                    \e[0m%s\n"\
 "\e[1;36m                 .o+`                   \e[0m%s\n"\
