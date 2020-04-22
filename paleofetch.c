@@ -143,10 +143,25 @@ char *get_host() {
     fread(host, 1, BUF_SIZE, product_name);
     fclose(product_name);
 
+    FILE *product_version = fopen("/sys/devices/virtual/dmi/id/product_version", "r");
+
+    if(product_version == NULL) {
+        status = -1;
+        halt_and_catch_fire("unable to open product version file");
+    }
+
+    char version[BUF_SIZE];
+
+    fread(version, 1, BUF_SIZE, product_version);
+    fclose(product_version);
+
     // trim trailing newline
     char *s = host;
     while(*(++s) != '\n') ;
     *s = '\0';
+
+    strcat(host, " ");
+    strcat(host, version);
 
     return host;
 }
