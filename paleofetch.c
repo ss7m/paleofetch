@@ -43,7 +43,8 @@ int title_length;
 int status;
 
 void remove_newline(char *s) {
-    while (*(++s) != '\n');
+    while (*s != '\0' && *s != '\n')
+        s++;
     *s = '\0';
 }
 
