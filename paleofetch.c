@@ -351,29 +351,73 @@ char *get_colors2() {
     return colors2;
 }
 
-int main() {
+char *get_cache_file() {
+    char *cache_file = malloc(BUF_SIZE);
+    char *env = getenv("XDG_CACHE_HOME");
+    if(env == NULL)
+        snprintf(cache_file, BUF_SIZE, "%s/.cache/paleofetch", getenv("HOME"));
+    else
+        snprintf(cache_file, BUF_SIZE, "%s/paleofetch", env);
+
+    return cache_file;
+}
+
+int main(int argc, char *argv[]) {
+    char *cache;
+    FILE *cache_file;
+    char *title, *bar, *os, *kernel, *host, *uptime, *packages, *shell, *resolution, *terminal, *cpu, *gpu, *memory, *colors1, *colors2;
+    int read_cache;
+
     status = uname(&uname_info);
     halt_and_catch_fire("uname failed");
     status = sysinfo(&my_sysinfo);
     halt_and_catch_fire("sysinfo failed");
 
-    char *title = get_title();
-    char *bar = get_bar();
-    char *os = get_os();
-    char *kernel = get_kernel();
-    char *host = get_host();
-    char *uptime = get_uptime();
-    char *packages = get_packages();
-    char *shell = get_shell();
-    char *resolution = get_resolution();
-    char *terminal = get_terminal();
-    char *cpu = get_cpu();
-    char *gpu = get_gpu();
-    char *memory = get_memory();
-    char *colors1 = get_colors1();
-    char *colors2 = get_colors2();
+    cache = get_cache_file();
+    if(argc == 2 && strcmp(argv[1], "--recache") == 0)
+        read_cache = 0;
+    else {
+        cache_file = fopen(cache, "r");
+        read_cache = cache_file != NULL;
+    }
+
+    if(read_cache) {
+        os = malloc(BUF_SIZE);
+        host = malloc(BUF_SIZE);
+        kernel = malloc(BUF_SIZE);
+        cpu = malloc(BUF_SIZE);
+        gpu = malloc(BUF_SIZE);
+        fscanf(cache_file, "OS: %[^\n] HOST: %[^\n] KERNEL: %[^\n] CPU: %[^\n] GPU: %[^\n]",
+                os, host, kernel, cpu, gpu);
+        fclose(cache_file);
+    }
+    else {
+        os = get_os();
+        host = get_host();
+        kernel = get_kernel();
+        cpu = get_cpu();
+        gpu = get_gpu();
+    }
+
+    title = get_title();
+    bar = get_bar();
+    uptime = get_uptime();
+    packages = get_packages();
+    shell = get_shell();
+    resolution = get_resolution();
+    terminal = get_terminal();
+    memory = get_memory();
+    colors1 = get_colors1();
+    colors2 = get_colors2();
 
     printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, terminal, cpu, gpu, memory, colors1, colors2);
+
+    if(!read_cache) {
+        cache_file = fopen(cache, "w");
+        fprintf(cache_file, "OS: %s\nHOST: %s\nKERNEL: %s\nCPU: %s\nGPU: %s\n",
+                os, host, kernel, cpu, gpu);
+        fclose(cache_file);
+    }
 
     free(title);
     free(bar);
@@ -390,4 +434,6 @@ int main() {
     free(memory);
     free(colors1);
     free(colors2);
+
+    free(cache);
 }
