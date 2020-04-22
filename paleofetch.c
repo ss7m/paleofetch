@@ -2,11 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <sys/utsname.h>
 #include <sys/sysinfo.h> // man 2 sysinfo
-
-#include <dirent.h>
 
 #define DISTRO "Arch"
 #define BUF_SIZE 150
@@ -38,13 +37,24 @@
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
 int title_length;
+int status;
+
+void halt_and_catch_fire(const char *message) {
+    if(status != 0) {
+        printf("%s\n", message);
+        exit(status);
+    }
+}
 
 char *get_title() {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
-    gethostname(hostname, BUF_SIZE / 3);
+    status = gethostname(hostname, BUF_SIZE / 3);
+    halt_and_catch_fire("unable to retrieve host name");
+
     char username[BUF_SIZE / 3];
-    getlogin_r(username, BUF_SIZE / 3);
+    status = getlogin_r(username, BUF_SIZE / 3);
+    halt_and_catch_fire("unable to retrieve login name");
 
     title_length = strlen(hostname) + strlen(username) + 1;
 
@@ -76,6 +86,12 @@ char *get_kernel() {
 
 char *get_host() {
     FILE *product_name = fopen("/sys/devices/virtual/dmi/id/product_name", "r");
+
+    if(product_name == NULL) {
+        status = -1;
+        halt_and_catch_fire("unable to open product name file");
+    }
+
     char *host = malloc(BUF_SIZE);
     fread(host, 1, BUF_SIZE, product_name);
     fclose(product_name);
@@ -113,12 +129,20 @@ char *get_packages() {
     struct dirent *entry;
 
     dirp = opendir("/var/lib/pacman/local");
+
+    if(dirp == NULL) {
+        status = -1;
+        halt_and_catch_fire("Do you not have pacman installed? How did you find this?\n"
+                "Please email samfbarr@outlook.com with the details of how you got here.\n"
+                "This information will be very useful for my upcoming demographics survey.");
+    }
+
     while((entry = readdir(dirp)) != NULL) {
         if(entry->d_type == DT_DIR) num_packages++;
     }
     num_packages -= 2; // accounting for . and ..
 
-    closedir(dirp);
+    status = closedir(dirp);
 
     char *packages = malloc(BUF_SIZE);
     snprintf(packages, BUF_SIZE, "%d (pacman)", num_packages);
@@ -146,7 +170,7 @@ char *get_colors1() {
 }
 
 char *get_colors2() {
-    char *colors2 = malloc(2 * BUF_SIZE); // this ends up being a long string
+    char *colors2 = malloc(BUF_SIZE);
     char *s = colors2;
 
     for(int i = 8; i < 16; i++) {
