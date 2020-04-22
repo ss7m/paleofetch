@@ -160,6 +160,10 @@ char *get_shell() {
 
 char *get_resolution() {
     Display *display = XOpenDisplay(NULL);
+    if(display == NULL) {
+        status = -1;
+        halt_and_catch_fire("XOpenDisplay failed");
+    }
     int screen = DefaultScreen(display);
 
     int width = DisplayWidth(display, screen);
