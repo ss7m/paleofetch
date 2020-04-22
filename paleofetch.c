@@ -48,6 +48,38 @@ void halt_and_catch_fire(const char *message) {
     }
 }
 
+/*
+ * Removes the first len characters of substring from str
+ * Currently assumes that strlen(substring) >= len
+ */
+int remove_substring(char *str, const char* substring, size_t len) {
+    if(len == 0) return -1;
+
+    int offset = 0;
+    for(;;) {
+        int match = 1;
+        for(size_t i = 0; i < len; i++) {
+            if(*(str+offset+i) == '\0') return -1;
+            else if(*(str+offset+i) != *(substring+i)) {
+                match = 0;
+                break;
+            }
+        }
+
+        if(match) break;
+        offset++;
+    }
+
+    int i = 0;
+    for(;;) {
+        if(*(str+offset+i) == '\0') break;
+        *(str+offset+i) = *(str+offset+i+len);
+        i++;
+    }
+
+    return offset;
+}
+
 char *get_title() {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
@@ -176,6 +208,36 @@ char *get_resolution() {
     return resolution;
 }
 
+char *get_cpu() {
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    if(cpuinfo == NULL) {
+        status = -1;
+        halt_and_catch_fire("Unable to open cpuinfo");
+    }
+
+    char *cpu_model = malloc(BUF_SIZE / 2);
+    char *line = NULL;
+    size_t len;
+    int num_cores = 0;
+
+    while(getline(&line, &len, cpuinfo) != -1) {
+        num_cores += sscanf(line, "model name	: %[^@] @", cpu_model);
+    }
+    free(line);
+    fclose(cpuinfo);
+
+    char *cpu = malloc(BUF_SIZE);
+    snprintf(cpu, BUF_SIZE, "%s(%d)", cpu_model, num_cores);
+    free(cpu_model);
+
+    remove_substring(cpu, "(R)", 3);
+    remove_substring(cpu, "(TM)", 4);
+    remove_substring(cpu, "Core", 4);
+    remove_substring(cpu, "CPU", 3);
+
+    return cpu;
+}
+
 char *get_memory() {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
@@ -257,11 +319,12 @@ int main() {
     char *packages = get_packages();
     char *shell = get_shell();
     char *resolution = get_resolution();
+    char *cpu = get_cpu();
     char *memory = get_memory();
     char *colors1 = get_colors1();
     char *colors2 = get_colors2();
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", "CPU", "GPU", memory, colors1, colors2);
+    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", cpu, "GPU", memory, colors1, colors2);
 
     free(title);
     free(bar);
@@ -272,6 +335,7 @@ int main() {
     free(packages);
     free(shell);
     free(resolution);
+    free(cpu);
     free(memory);
     free(colors1);
     free(colors2);
