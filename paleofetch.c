@@ -9,7 +9,6 @@
 #include <pci/pci.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 
 #define DISTRO "Arch"
 #define BUF_SIZE 150
@@ -223,27 +222,8 @@ char *get_resolution() {
 }
 
 char *get_terminal() {
-    Display *display = XOpenDisplay(NULL);
-    unsigned char *prop;
-    unsigned long _, // not unused, but we don't need the results
-                  window = RootWindow(display, XDefaultScreen(display));
-    Atom a,
-         active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
-         class = XInternAtom(display, "WM_CLASS", True);
-
-#define GetProp(property) \
-    XGetWindowProperty(display, window, property, 0, 64, 0, 0, &a, (int *)&_, &_, &_, &prop);
-
-    GetProp(active);
-    window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
-    free(prop);
-    GetProp(class);
-    XCloseDisplay(display);
-
     char *terminal = malloc(BUF_SIZE);
-    snprintf(terminal, BUF_SIZE, "%s", prop);
-    free(prop);
-
+    strncpy(terminal, getenv("TERM"), BUF_SIZE);
     return terminal;
 }
 
