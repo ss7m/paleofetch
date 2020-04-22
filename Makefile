@@ -1,4 +1,4 @@
-CFLAGS=-O3 -Wall -Wextra
+CFLAGS=-O3 -Wall -Wextra -lX11
 PREFIX=$(HOME)/.local
 
 all: paleofetch

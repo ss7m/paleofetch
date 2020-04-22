@@ -7,6 +7,8 @@
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
 
+#include <X11/Xlib.h>
+
 #define DISTRO "Arch"
 #define BUF_SIZE 150
 
@@ -156,6 +158,20 @@ char *get_shell() {
     return shell;
 }
 
+char *get_resolution() {
+    Display *display = XOpenDisplay(NULL);
+    int screen = DefaultScreen(display);
+
+    int width = DisplayWidth(display, screen);
+    int height = DisplayHeight(display, screen);
+    XCloseDisplay(display);
+
+    char *resolution = malloc(BUF_SIZE);
+    snprintf(resolution, BUF_SIZE, "%dx%d", width, height);
+
+    return resolution;
+}
+
 char *get_colors1() {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
@@ -196,10 +212,11 @@ int main() {
     char *uptime = get_uptime();
     char *packages = get_packages();
     char *shell = get_shell();
+    char *resolution = get_resolution();
     char *colors1 = get_colors1();
     char *colors2 = get_colors2();
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, "RESOLUTION", "TERMINAL", "CPU", "GPU", "MEMORY", colors1, colors2);
+    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", "CPU", "GPU", "MEMORY", colors1, colors2);
 
     free(title);
     free(bar);
@@ -209,6 +226,7 @@ int main() {
     free(uptime);
     free(packages);
     free(shell);
+    free(resolution);
     free(colors1);
     free(colors2);
 }
