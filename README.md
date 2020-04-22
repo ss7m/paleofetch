@@ -14,8 +14,13 @@ Example output:
 
 Compiling
 ---------
+```bash
+mkdir build
+cd build
 
-    make install
+cmake ..
+make
+```
 
 FAQ
 ---
