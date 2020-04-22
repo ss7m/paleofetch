@@ -140,7 +140,7 @@ char *get_packages() {
     while((entry = readdir(dirp)) != NULL) {
         if(entry->d_type == DT_DIR) num_packages++;
     }
-    num_packages -= 2; // accounting for . and ..
+    num_packages -= 3; // accounting for ., .., and ALPM_DB_VERSION
 
     status = closedir(dirp);
 
