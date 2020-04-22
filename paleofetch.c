@@ -51,10 +51,12 @@ void halt_and_catch_fire(const char *message) {
 /*
  * Removes the first len characters of substring from str
  * Currently assumes that strlen(substring) >= len
+ * Returns index where substring was found, or -1 if substring isn't found
  */
 int remove_substring(char *str, const char* substring, size_t len) {
     if(len == 0) return -1;
 
+    /* search for substring */
     int offset = 0;
     for(;;) {
         int match = 1;
@@ -70,6 +72,7 @@ int remove_substring(char *str, const char* substring, size_t len) {
         offset++;
     }
 
+    /* shift over the rest of the string to remove substring */
     int i = 0;
     for(;;) {
         if(*(str+offset+i) == '\0') break;
@@ -209,7 +212,7 @@ char *get_resolution() {
 }
 
 char *get_cpu() {
-    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
         status = -1;
         halt_and_catch_fire("Unable to open cpuinfo");
@@ -217,9 +220,10 @@ char *get_cpu() {
 
     char *cpu_model = malloc(BUF_SIZE / 2);
     char *line = NULL;
-    size_t len;
+    size_t len; /* unused */
     int num_cores = 0;
 
+    /* read the model name into cpu_model, and increment num_cores every time model name is found */
     while(getline(&line, &len, cpuinfo) != -1) {
         num_cores += sscanf(line, "model name	: %[^@] @", cpu_model);
     }
@@ -230,6 +234,7 @@ char *get_cpu() {
     snprintf(cpu, BUF_SIZE, "%s(%d)", cpu_model, num_cores);
     free(cpu_model);
 
+    /* remove unneeded information */
     remove_substring(cpu, "(R)", 3);
     remove_substring(cpu, "(TM)", 4);
     remove_substring(cpu, "Core", 4);
