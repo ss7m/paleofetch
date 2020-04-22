@@ -2,9 +2,9 @@ paleofetch
 ==========
 
 Like neofetch, but incomplete, written in ~200 lines of C instead of 10,000 lines of bash,
-and runns in like 0.005 seconds.
+and runs in like 0.005 seconds.
 
-This is a WIP, and not even at MVP yet.
+This is a WIP, and definitely not a minimum viable product.
 
 If anyone has input for the features I have yet to implement, I would love to hear them.
 
