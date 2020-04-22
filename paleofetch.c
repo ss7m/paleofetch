@@ -198,8 +198,6 @@ char *get_resolution() {
 
 char *get_cpu() {
     char cpu_name[50];
-    char *cpu_model;
-    char *cpu_frequency;
     int cores;    
 
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* get infomation from cpuinfo */
@@ -219,13 +217,9 @@ char *get_cpu() {
 
     fclose(cpuinfo);
 
-    strip_spaces(cpu_name);
-    cpu_model = strtok(cpu_name, "@");
-    cpu_frequency = strtok(NULL, "@");
-    
     char *cpu = malloc(BUF_SIZE);
-    //snprintf(cpu, BUF_SIZE, "%s (%d)", cpu_name, cores + 1);
-    snprintf(cpu, BUF_SIZE, "%s(%d) @%s", cpu_model, cores + 1, cpu_frequency);
+    strip_spaces(cpu_name);    
+    snprintf(cpu, BUF_SIZE, "%s (%d)", cpu_name, cores + 1);
 
     return cpu;
 }
