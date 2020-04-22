@@ -6,6 +6,7 @@
 
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
+#include <pci/pci.h>
 
 #include <X11/Xlib.h>
 
@@ -49,11 +50,10 @@ void halt_and_catch_fire(const char *message) {
 }
 
 /*
- * Removes the first len characters of substring from str
- * Currently assumes that strlen(substring) >= len
- * Returns index where substring was found, or -1 if substring isn't found
+ * Returns index of substring in str, if it is there
+ * Assumes that strlen(substring) >= len
  */
-int remove_substring(char *str, const char* substring, size_t len) {
+int contains_substring(const char *str, const char*substring, size_t len) {
     if(len == 0) return -1;
 
     /* search for substring */
@@ -72,15 +72,25 @@ int remove_substring(char *str, const char* substring, size_t len) {
         offset++;
     }
 
+    return offset;
+}
+
+/*
+ * Removes the first len characters of substring from str
+ * Assumes that strlen(substring) >= len
+ * Returns index where substring was found, or -1 if substring isn't found
+ */
+void remove_substring(char *str, const char* substring, size_t len) {
     /* shift over the rest of the string to remove substring */
+    int offset = contains_substring(str, substring, len);
+    if(offset < 0) return;
+
     int i = 0;
     for(;;) {
         if(*(str+offset+i) == '\0') break;
         *(str+offset+i) = *(str+offset+i+len);
         i++;
     }
-
-    return offset;
 }
 
 char *get_title() {
@@ -211,6 +221,12 @@ char *get_resolution() {
     return resolution;
 }
 
+char *get_terminal() {
+    char *terminal = malloc(BUF_SIZE);
+    strncpy(terminal, getenv("TERM"), BUF_SIZE);
+    return terminal;
+}
+
 char *get_cpu() {
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
@@ -241,6 +257,32 @@ char *get_cpu() {
     remove_substring(cpu, "CPU", 3);
 
     return cpu;
+}
+
+char *get_gpu() {
+    // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
+    char *gpu = malloc(BUF_SIZE);
+    struct pci_access *pacc;
+    struct pci_dev *dev;
+
+    pacc = pci_alloc();
+    pci_init(pacc);
+    pci_scan_bus(pacc);
+    dev = pacc->devices;
+
+    while(dev != NULL) {
+        pci_fill_info(dev, PCI_FILL_IDENT);
+        pci_lookup_name(pacc, gpu, BUF_SIZE, PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id);
+        /* as far as I know, this is the only way to check if its a graphics card */
+        if(contains_substring(gpu, "Graphics", 8) >= 0) break;
+
+        dev = dev->next;
+    }
+
+    remove_substring(gpu, "Corporation ", 12);
+
+    pci_cleanup(pacc);
+    return gpu;
 }
 
 char *get_memory() {
@@ -324,12 +366,14 @@ int main() {
     char *packages = get_packages();
     char *shell = get_shell();
     char *resolution = get_resolution();
+    char *terminal = get_terminal();
     char *cpu = get_cpu();
+    char *gpu = get_gpu();
     char *memory = get_memory();
     char *colors1 = get_colors1();
     char *colors2 = get_colors2();
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", cpu, "GPU", memory, colors1, colors2);
+    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, terminal, cpu, gpu, memory, colors1, colors2);
 
     free(title);
     free(bar);
@@ -340,7 +384,9 @@ int main() {
     free(packages);
     free(shell);
     free(resolution);
+    free(terminal);
     free(cpu);
+    free(gpu);
     free(memory);
     free(colors1);
     free(colors2);
