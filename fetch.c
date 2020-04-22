@@ -11,8 +11,6 @@
 #define DISTRO "Arch"
 #define BUF_SIZE 150
 
-#define BYTES_TO_MIB(B) ((B) / 1048576L)
-
 #define FORMAT_STR \
 "\x1b[1;36m                  -`                    \x1b[0m%s\n"\
 "\x1b[1;36m                 .o+`                   \x1b[0m%s\n"\
@@ -34,8 +32,8 @@
 "\x1b[1;36m`++:.                           `-/+/   %s\n"\
 "\x1b[1;36m.`                                 `/\x1b[0m\n\n"
 
-// TODO: add null terminator to EVERYTHING
 // TODO: error checking
+// TODO: Finish it
 
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
@@ -51,7 +49,7 @@ char *get_title() {
     title_length = strlen(hostname) + strlen(username) + 1;
 
     char *title = malloc(BUF_SIZE);
-    sprintf(title, "\e[1;36m%s\e[0m@\e[1;36m%s", hostname, username);
+    snprintf(title, BUF_SIZE, "\e[1;36m%s\e[0m@\e[1;36m%s", hostname, username);
 
     return title;
 }
@@ -66,13 +64,13 @@ char *get_bar() {
 
 char *get_os() {
     char *os = malloc(BUF_SIZE);
-    sprintf(os, "%s %s %s", DISTRO, uname_info.sysname, uname_info.machine);
+    snprintf(os, BUF_SIZE, "%s %s %s", DISTRO, uname_info.sysname, uname_info.machine);
     return os;
 }
 
 char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
-    strcpy(kernel, uname_info.release);
+    strncpy(kernel, uname_info.release, BUF_SIZE);
     return kernel;
 }
 
@@ -99,11 +97,11 @@ char *get_uptime() {
     char *uptime = malloc(BUF_SIZE);
 
     if(hours > 0)
-        sprintf(uptime, "%ld hours, %ld mins", hours, minutes);
+        snprintf(uptime, BUF_SIZE, "%ld hours, %ld mins", hours, minutes);
     else if(minutes > 0)
-        sprintf(uptime, "%ld mins", minutes);
+        snprintf(uptime, BUF_SIZE, "%ld mins", minutes);
     else
-        sprintf(uptime, "%ld secs", seconds);
+        snprintf(uptime, BUF_SIZE, "%ld secs", seconds);
 
     return uptime;
 }
@@ -123,7 +121,7 @@ char *get_packages() {
     closedir(dirp);
 
     char *packages = malloc(BUF_SIZE);
-    sprintf(packages, "%d (pacman)", num_packages);
+    snprintf(packages, BUF_SIZE, "%d (pacman)", num_packages);
 
     return packages;
 }
@@ -142,7 +140,7 @@ char *get_colors1() {
         sprintf(s, "\e[4%dm   ", i);
         s += 8;
     }
-    strcpy(s, "\e[0m");
+    snprintf(s, 5, "\e[0m");
 
     return colors1;
 }
@@ -155,7 +153,7 @@ char *get_colors2() {
         sprintf(s, "\e[48;5;%dm   ", i);
         s += 12 + (i >= 10 ? 1 : 0);
     }
-    strcpy(s, "\e[0m");
+    snprintf(s, 5, "\e[0m");
 
     return colors2;
 }
@@ -187,24 +185,4 @@ int main() {
     free(shell);
     free(colors1);
     free(colors2);
-
-    //printf("\e[40m   \e[0m\n");
-    //printf("\e[41m   \e[0m\n");
-    //printf("\e[42m   \e[0m\n");
-    //printf("\e[43m   \e[0m\n");
-    //printf("\e[44m   \e[0m\n");
-    //printf("\e[45m   \e[0m\n");
-    //printf("\e[46m   \e[0m\n");
-    //printf("\e[47m   \e[0m\n");
-    //printf("\e[48;5;8m   \e[0m\n");
-    //printf("\e[48;5;9m   \e[0m\n");
-    //printf("\e[48;5;10m   \e[0m\n");
-    //printf("\e[48;5;11m   \e[0m\n");
-    //printf("\e[48;5;12m   \e[0m\n");
-    //printf("\e[48;5;13m   \e[0m\n");
-    //printf("\e[48;5;14m   \e[0m\n");
-    //printf("\e[48;5;15m   \e[0m\n");
-    //printf("%d\n", BYTES_TO_MIB(my_sysinfo.totalram));
-    //printf("%ld\n", (my_sysinfo.totalram));
-    //printf("%ld\n", (my_sysinfo.freeram + my_sysinfo.bufferram));
 }
