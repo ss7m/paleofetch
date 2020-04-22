@@ -176,6 +176,41 @@ char *get_resolution() {
     return resolution;
 }
 
+char *get_memory() {
+    int total_memory, used_memory;
+    int total, shared, memfree, buffers, cached, reclaimable;
+
+    FILE *meminfo = fopen("/proc/meminfo", "r"); /* get infomation from meminfo */
+    
+    /* We parse through all lines of meminfo and scan for the information we need */
+    char *line = malloc(BUF_SIZE);
+    size_t len; /* unused */
+
+    /* parse until EOF */
+    while (getline(&line, &len, meminfo) != -1) {
+        /* if sscanf doesn't find a match, pointer is untouched */
+        sscanf(line, "MemTotal: %d", &total);
+        sscanf(line, "Shmem: %d", &shared);
+        sscanf(line, "MemFree: %d", &memfree);
+        sscanf(line, "Buffers: %d", &buffers);
+        sscanf(line, "Cached: %d", &cached);
+        sscanf(line, "SReclaimable: %d", &reclaimable);
+    }
+
+    free(line);
+
+    fclose(meminfo);
+    
+    /* use same calculation as neofetch */
+    used_memory = (total + shared - memfree - buffers - cached - reclaimable) / 1024;
+    total_memory = total / 1024;
+
+    char *memory = malloc(BUF_SIZE);
+    snprintf(memory, BUF_SIZE, "%dMiB / %dMiB", used_memory, total_memory);
+
+    return memory;
+}
+
 char *get_colors1() {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
@@ -217,10 +252,11 @@ int main() {
     char *packages = get_packages();
     char *shell = get_shell();
     char *resolution = get_resolution();
+    char *memory = get_memory();
     char *colors1 = get_colors1();
     char *colors2 = get_colors2();
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", "CPU", "GPU", "MEMORY", colors1, colors2);
+    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, "TERMINAL", "CPU", "GPU", memory, colors1, colors2);
 
     free(title);
     free(bar);
@@ -231,6 +267,7 @@ int main() {
     free(packages);
     free(shell);
     free(resolution);
+    free(memory);
     free(colors1);
     free(colors2);
 }
