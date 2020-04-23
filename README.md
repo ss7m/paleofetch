@@ -71,6 +71,9 @@ which function paleofetch will call display. Current available getter functions 
 To include a blank line between entries, put `SPACER \` between the two lines
 you want to separate.
 
+The booleans in `CONFIG` tell paleofetch whether you want to cache an entry.
+When cached, paleofetch will save the value and not recompute it whenever you run paleofetch
+(unless you specify the `--recache` option).
 FAQ
 ---
 
