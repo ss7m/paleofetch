@@ -224,7 +224,14 @@ char *get_packages() {
 
 char *get_shell() {
     char *shell = malloc(BUF_SIZE);
-    strncpy(shell, strrchr(getenv("SHELL"), '/') + 1, BUF_SIZE);
+    char *shell_path = getenv("SHELL");
+    char *shell_name = strrchr(getenv("SHELL"), '/');
+
+    if(shell_name == NULL) /* if $SHELL doesn't have a '/' */
+        strncpy(shell, shell_path, BUF_SIZE); /* copy the whole thing over */
+    else
+        strncpy(shell, shell_name + 1, BUF_SIZE); /* o/w copy past the last '/' */
+
     return shell;
 }
 
