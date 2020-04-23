@@ -51,7 +51,8 @@ prints. Each entry in this macro should look like
     
 Take note of the trailing comma and backslash. The first piece, `"NAME: "`, sets
 what paleofetch prints before printing the information; this usually tells you what
-bit of information is being shown. The second piece, `getter_function`, sets
+bit of information is being shown. Note that the name entry should be unique for entries
+which are to be cached. The second piece, `getter_function`, sets
 which function paleofetch will call display. Current available getter functions are
 
 * `get_title`: prints `host@user` like in a bash prompt. Host and user will be printed in color.
@@ -65,6 +66,7 @@ which function paleofetch will call display. Current available getter functions 
 * `get_resolution`: Prints your screen resolution
 * `get_terminal`: Prints the name of your current terminal
 * `get_cpu`: Prints the name of your CPU, number of cores, and maximum frequency
+* `get_gpu1`, `get_gpu2`: Print the GPU on your system. If you don't have both integrated graphics and an external GPU, `get_gpu2` will likely be blank
 * `get_gpu`: (Tries to) print your current GPU
 * `get_colors1`, `get_colors2`: Prints the colors of your terminal
 
