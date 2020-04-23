@@ -295,7 +295,8 @@ char *get_cpu() {
 
 char *get_gpu() {
     // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
-    char *gpu = malloc(BUF_SIZE);
+    /* it seems that pci_lookup_name needs to be given a buffer, but I can't for the life of my figure out what its for */
+    char buffer[BUF_SIZE], *gpu = malloc(BUF_SIZE);
     struct pci_access *pacc;
     struct pci_dev *dev;
 
@@ -306,14 +307,15 @@ char *get_gpu() {
 
     while(dev != NULL) {
         pci_fill_info(dev, PCI_FILL_IDENT);
-        pci_lookup_name(pacc, gpu, BUF_SIZE, PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id);
-        /* as far as I know, this is the only way to check if its a graphics card */
-        if(contains_substring(gpu, "Graphics", 8) >= 0) break;
+        if(strcmp("VGA compatible controller", pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class)) == 0) {
+            strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
+            break;
+        }
 
         dev = dev->next;
     }
 
-    remove_substring(gpu, "Corporation ", 12);
+    remove_substring(gpu, "Corporation", 11);
 
     pci_cleanup(pacc);
     return gpu;
