@@ -68,15 +68,12 @@ void truncate_spaces(char *str) {
  */
 void remove_substring(char *str, const char* substring, size_t len) {
     /* shift over the rest of the string to remove substring */
-    int offset = strstr(str, substring) - str;
-    if(offset < 0) return;
+    char *sub = strstr(str, substring);
+    if(sub == NULL) return;
 
     int i = 0;
-    for(;;) {
-        if(*(str+offset+i) == '\0') break;
-        *(str+offset+i) = *(str+offset+i+len);
-        i++;
-    }
+    do *(sub+i) = *(sub+i+len);
+    while(*(sub+(++i)) != '\0');
 }
 
 char *get_title() {
