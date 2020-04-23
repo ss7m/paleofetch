@@ -367,12 +367,12 @@ char *get_cpu() {
     remove_substring(cpu_model, "(TM)", 4);
     remove_substring(cpu_model, "Core", 4);
     remove_substring(cpu_model, "CPU", 3);
-    truncate_spaces(cpu_model);
 
     char *cpu = malloc(BUF_SIZE);
-    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.3fGHz", cpu_model, num_cores, freq);
+    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.1fGHz", cpu_model, num_cores, freq);
     free(cpu_model);
 
+    truncate_spaces(cpu);
     return cpu;
 }
 
