@@ -106,6 +106,10 @@ char *get_os() {
     char *os = malloc(BUF_SIZE),
          *name = malloc(BUF_SIZE);
     FILE *os_release = fopen("/etc/os-release", "r");
+    if(os_release == NULL) {
+        status = -1;
+        halt_and_catch_fire("unable to open /etc/os-release");
+    }
 
     fscanf(os_release, "NAME=\"%[^\"]+", name);
     fclose(os_release);
