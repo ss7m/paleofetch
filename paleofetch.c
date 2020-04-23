@@ -185,19 +185,23 @@ char *get_host() {
 
 char *get_uptime() {
     long seconds = my_sysinfo.uptime;
-    long hours = seconds / 3600;
-    long minutes = (seconds / 60) % 60;
-    seconds = seconds % 60;
+    struct { char *name; int secs; } units[] = {
+        { "day",  60 * 60 * 24 },
+        { "hour", 60 * 60 },
+        { "min",  60 },
+    };
 
+    int n, len = 0;
     char *uptime = malloc(BUF_SIZE);
+    for (int i = 0; i < 3; ++i ) {
+        if ((n = seconds / units[i].secs))
+            len += snprintf(uptime + len, BUF_SIZE - len, 
+                            "%d %s%s, ", n, units[i].name, n > 1 ? "s": "");
+        seconds %= units[i].secs;
+    }
 
-    if(hours > 0)
-        snprintf(uptime, BUF_SIZE, "%ld hours, %ld mins", hours, minutes);
-    else if(minutes > 0)
-        snprintf(uptime, BUF_SIZE, "%ld mins", minutes);
-    else
-        snprintf(uptime, BUF_SIZE, "%ld secs", seconds);
-
+    // null-terminate at the trailing comma
+    uptime[len - 2] = '\0';
     return uptime;
 }
 
