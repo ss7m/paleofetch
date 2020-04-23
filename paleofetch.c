@@ -30,7 +30,7 @@ int status;
 
 void halt_and_catch_fire(const char *message) {
     if(status != 0) {
-        printf("%s\n", message);
+        printf("paleofetch: %s\n", message);
         exit(status);
     }
 }
