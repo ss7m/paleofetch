@@ -194,7 +194,7 @@ char *get_uptime() {
     int n, len = 0;
     char *uptime = malloc(BUF_SIZE);
     for (int i = 0; i < 3; ++i ) {
-        if ((n = seconds / units[i].secs))
+        if ((n = seconds / units[i].secs) || i == 2) /* always print minutes */
             len += snprintf(uptime + len, BUF_SIZE - len, 
                             "%d %s%s, ", n, units[i].name, n > 1 ? "s": "");
         seconds %= units[i].secs;
