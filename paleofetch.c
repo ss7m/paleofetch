@@ -16,6 +16,7 @@
 
 #define DISTRO "Arch"
 #define BUF_SIZE 150
+#define LOGO logo1
 
 struct conf {
     char *label, *(*function)();
@@ -42,26 +43,47 @@ struct conf {
 };
 
 // I copy pasted this from neofetch, in case you were curious
-char *logo[] = {
-    "\e[1;36m                  -`                    ",
-    "\e[1;36m                 .o+`                   ",
-    "\e[1;36m                `ooo/                   ",
-    "\e[1;36m               `+oooo:                  ",
-    "\e[1;36m              `+oooooo:                 ",
-    "\e[1;36m              -+oooooo+:                ",
-    "\e[1;36m            `/:-:++oooo+:               ",
-    "\e[1;36m           `/++++/+++++++:              ",
-    "\e[1;36m          `/++++++++++++++:             ",
-    "\e[1;36m         `/+++ooooooooooooo/`           ",
-    "\e[1;36m        ./ooosssso++osssssso+`          ",
-    "\e[1;36m       .oossssso-````/ossssss+`         ",
-    "\e[1;36m      -osssssso.      :ssssssso.        ",
-    "\e[1;36m     :osssssss/        osssso+++.       ",
-    "\e[1;36m    /ossssssss/        +ssssooo/-       ",
-    "\e[1;36m  `/ossssso+/:-        -:/+osssso+-     ",
-    "\e[1;36m `+sso+:-`                 `.-/+oso:    ",
-    "\e[1;36m`++:.                           `-/+/   ",
-    "\e[1;36m.`                                 `/   "
+char *logo1[] = {
+    "                  -`                    ",
+    "                 .o+`                   ",
+    "                `ooo/                   ",
+    "               `+oooo:                  ",
+    "              `+oooooo:                 ",
+    "              -+oooooo+:                ",
+    "            `/:-:++oooo+:               ",
+    "           `/++++/+++++++:              ",
+    "          `/++++++++++++++:             ",
+    "         `/+++ooooooooooooo/`           ",
+    "        ./ooosssso++osssssso+`          ",
+    "       .oossssso-````/ossssss+`         ",
+    "      -osssssso.      :ssssssso.        ",
+    "     :osssssss/        osssso+++.       ",
+    "    /ossssssss/        +ssssooo/-       ",
+    "  `/ossssso+/:-        -:/+osssso+-     ",
+    " `+sso+:-`                 `.-/+oso:    ",
+    "`++:.                           `-/+/   ",
+    ".`                                 `/   "
+};
+// And this was stolen from archey3
+char *logo2[] = {
+    "              +                 ",
+    "              #                 ",
+    "             ###                ",
+    "            #####               ",
+    "            ######              ",
+    "           ; #####;             ",
+    "          +##.#####             ",
+    "         +##########            ",
+    "        #############;          ",
+    "       ###############+         ",
+    "      #######   #######         ",
+    "    .######;     ;###;`'.       ",
+    "   .#######;     ;#####.        ",
+    "   #########.   .########`      ",
+    "  ######'           '######     ",
+    " ;####                 ####;    ",
+    " ##'                     '##    ",
+    "#'                         `#   "
 };
 
 // TODO: Finish it
@@ -520,16 +542,17 @@ int main(int argc, char *argv[]) {
 
 #define COUNT(x) (int)(sizeof x / sizeof *x)
 
-    for (int i = 0; i < COUNT(logo); i++) {
+    for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
         if(i >= COUNT(config)) // just print the next line of the logo
-            puts(logo[i]);
+            puts(LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
             char *label = config[i].label,
                  *value = get_value(config[i], read_cache, cache_data);
-            printf("%s%s\e[0m%s\n", logo[i], label, value);
+            printf("\e[1;36m%s%s\e[0m%s\n", LOGO[i], label, value);
             free(value);
+
         }
     }
     puts("\e[0m");
