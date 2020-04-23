@@ -224,43 +224,101 @@ char *get_packages() {
 
 char *get_shell() {
     char *shell = malloc(BUF_SIZE);
-    strncpy(shell, strrchr(getenv("SHELL"), '/') + 1, BUF_SIZE);
+    char *shell_path = getenv("SHELL");
+    char *shell_name = strrchr(getenv("SHELL"), '/');
+
+    if(shell_name == NULL) /* if $SHELL doesn't have a '/' */
+        strncpy(shell, shell_path, BUF_SIZE); /* copy the whole thing over */
+    else
+        strncpy(shell, shell_name + 1, BUF_SIZE); /* o/w copy past the last '/' */
+
     return shell;
 }
 
 char *get_resolution() {
-    int screen = DefaultScreen(display);
-
-    int width = DisplayWidth(display, screen);
-    int height = DisplayHeight(display, screen);
-
+    int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
-    snprintf(resolution, BUF_SIZE, "%dx%d", width, height);
+    
+    if (display != NULL) {
+        screen = DefaultScreen(display);
+    
+        width = DisplayWidth(display, screen);
+        height = DisplayHeight(display, screen);
+
+        snprintf(resolution, BUF_SIZE, "%dx%d", width, height);
+    } else {
+        DIR *dir;
+        struct dirent *entry;
+        char dir_name[] = "/sys/class/drm";
+        char modes_file_name[BUF_SIZE * 2];
+        FILE *modes;
+        char *line = NULL;
+        size_t len;
+        
+        /* preload resolution with empty string, in case we cant find a resolution through parsing */
+        strncpy(resolution, "", BUF_SIZE);
+
+        dir = opendir(dir_name);
+        if (dir == NULL) {
+            status = -1;
+            halt_and_catch_fire("Could not open /sys/class/drm to determine resolution in tty mode.");
+        }
+        /* parse through all directories and look for a non empty modes file */
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_LNK) {
+                snprintf(modes_file_name, BUF_SIZE * 2, "%s/%s/modes", dir_name, entry->d_name);
+
+                modes = fopen(modes_file_name, "r");
+                if (modes != NULL) {
+                    if (getline(&line, &len, modes) != -1) {
+                        strncpy(resolution, line, BUF_SIZE);
+                        remove_newline(resolution);
+
+                        free(line);
+                        fclose(modes);
+
+                        break;
+                    }
+
+                    fclose(modes);
+                }
+            }
+        }
+        
+        closedir(dir);
+    }
 
     return resolution;
 }
 
 char *get_terminal() {
     unsigned char *prop;
+    char *terminal = malloc(BUF_SIZE);
+
+    /* check if xserver is running or if we are running in a straight tty */
+    if (display != NULL) {   
+
     unsigned long _, // not unused, but we don't need the results
-                  window = RootWindow(display, XDefaultScreen(display));
-    Atom a,
-         active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
-         class = XInternAtom(display, "WM_CLASS", True);
+                  window = RootWindow(display, XDefaultScreen(display));    
+        Atom a,
+             active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
+             class = XInternAtom(display, "WM_CLASS", True);
 
 #define GetProp(property) \
-    XGetWindowProperty(display, window, property, 0, 64, 0, 0, &a, (int *)&_, &_, &_, &prop);
+        XGetWindowProperty(display, window, property, 0, 64, 0, 0, &a, (int *)&_, &_, &_, &prop);
 
-    GetProp(active);
-    window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
-    free(prop);
-    GetProp(class);
+        GetProp(active);
+        window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
+        free(prop);
+        GetProp(class);
 
 #undef GetProp
 
-    char *terminal = malloc(BUF_SIZE);
-    snprintf(terminal, BUF_SIZE, "%s", prop);
-    free(prop);
+        snprintf(terminal, BUF_SIZE, "%s", prop);
+        free(prop);
+    } else {
+        strncpy(terminal, getenv("TERM"), BUF_SIZE); /* fallback to old method */
+    }
 
     return terminal;
 }
@@ -453,10 +511,6 @@ int main(int argc, char *argv[]) {
     status = sysinfo(&my_sysinfo);
     halt_and_catch_fire("sysinfo failed");
     display = XOpenDisplay(NULL);
-    if(display == NULL) {
-        status = -1;
-        halt_and_catch_fire("XOpenDisplay failed");
-    }
 
     cache = get_cache_file();
     if(argc == 2 && strcmp(argv[1], "--recache") == 0)
@@ -475,16 +529,27 @@ int main(int argc, char *argv[]) {
     }
 
 #define COUNT(x) (int)(sizeof x / sizeof *x)
+    int offset = 0;
 
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
-        if(i >= COUNT(config)) // just print the next line of the logo
+        if(i >= COUNT(config) - offset) // just print the next line of the logo
             printf(COLOR"%s\n", LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
-            char *label = config[i].label,
-                 *value = get_value(config[i], read_cache, cache_data);
-            printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+            char *label = config[i+offset].label,
+                 *value = get_value(config[i+offset], read_cache, cache_data);
+            if (strcmp(value, "") != 0) { // check if value is an empty string
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value); // just print if not empty
+            } else {
+                if (strcmp(label, "") != 0) { // check if label is empty, otherwise it's a spacer
+                    ++offset; // print next line of information
+                    free(value); // free memory allocated for empty value
+                    label = config[i+offset].label; // read new label and value
+                    value = get_value(config[i+offset], read_cache, cache_data);
+                }
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+            }
             free(value);
 
         }
@@ -500,7 +565,9 @@ int main(int argc, char *argv[]) {
 
     free(cache);
     free(cache_data);
-    XCloseDisplay(display);
+    if(display != NULL) { 
+        XCloseDisplay(display);
+    }
 
     return 0;
 }
