@@ -13,10 +13,10 @@
 #include <X11/Xatom.h>
 
 #include "paleofetch.h"
+#include "logos/arch2.h"
 
 #define DISTRO "Arch"
 #define BUF_SIZE 150
-#define LOGO logo1
 
 struct conf {
     char *label, *(*function)();
@@ -41,52 +41,6 @@ struct conf {
     { "",             get_colors1,    false },
     { "",             get_colors2,    false },
 };
-
-// I copy pasted this from neofetch, in case you were curious
-char *logo1[] = {
-    "                  -`                    ",
-    "                 .o+`                   ",
-    "                `ooo/                   ",
-    "               `+oooo:                  ",
-    "              `+oooooo:                 ",
-    "              -+oooooo+:                ",
-    "            `/:-:++oooo+:               ",
-    "           `/++++/+++++++:              ",
-    "          `/++++++++++++++:             ",
-    "         `/+++ooooooooooooo/`           ",
-    "        ./ooosssso++osssssso+`          ",
-    "       .oossssso-````/ossssss+`         ",
-    "      -osssssso.      :ssssssso.        ",
-    "     :osssssss/        osssso+++.       ",
-    "    /ossssssss/        +ssssooo/-       ",
-    "  `/ossssso+/:-        -:/+osssso+-     ",
-    " `+sso+:-`                 `.-/+oso:    ",
-    "`++:.                           `-/+/   ",
-    ".`                                 `/   "
-};
-// And this was stolen from archey3
-char *logo2[] = {
-    "              +                 ",
-    "              #                 ",
-    "             ###                ",
-    "            #####               ",
-    "            ######              ",
-    "           ; #####;             ",
-    "          +##.#####             ",
-    "         +##########            ",
-    "        #############;          ",
-    "       ###############+         ",
-    "      #######   #######         ",
-    "    .######;     ;###;`'.       ",
-    "   .#######;     ;#####.        ",
-    "   #########.   .########`      ",
-    "  ######'           '######     ",
-    " ;####                 ####;    ",
-    " ##'                     '##    ",
-    "#'                         `#   "
-};
-
-// TODO: Finish it
 
 Display *display;
 struct utsname uname_info;
