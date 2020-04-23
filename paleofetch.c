@@ -44,17 +44,37 @@ struct sysinfo my_sysinfo;
 int title_length;
 int status;
 
+void halt_and_catch_fire(const char *message) {
+    if(status != 0) {
+        printf("%s\n", message);
+        exit(status);
+    }
+}
+
+/*
+ * Replaces the first newline character with null terminator
+ */
 void remove_newline(char *s) {
     while (*s != '\0' && *s != '\n')
         s++;
     *s = '\0';
 }
 
-void halt_and_catch_fire(const char *message) {
-    if(status != 0) {
-        printf("%s\n", message);
-        exit(status);
+/*
+ * Cleans up repeated spaces in a string
+ */
+void truncate_spaces(char *str) {
+    int src = 0, dst = 0;
+
+    while(*(str + dst) != '\0') {
+        *(str + src) = *(str + dst);
+        if(*(str + (dst++)) == ' ')
+            while(*(str + dst) == ' ') dst++;
+
+        src++;
     }
+
+    *(str +src) = '\0';
 }
 
 /*
@@ -289,6 +309,7 @@ char *get_cpu() {
     remove_substring(cpu, "(TM)", 4);
     remove_substring(cpu, "Core", 4);
     remove_substring(cpu, "CPU", 3);
+    truncate_spaces(cpu);
 
     return cpu;
 }
@@ -316,6 +337,7 @@ char *get_gpu() {
     }
 
     remove_substring(gpu, "Corporation", 11);
+    truncate_spaces(gpu);
 
     pci_cleanup(pacc);
     return gpu;
