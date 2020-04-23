@@ -13,34 +13,14 @@
 #include <X11/Xatom.h>
 
 #include "paleofetch.h"
-#include "logos/arch2.h"
+#include "config.h"
 
-#define DISTRO "Arch"
 #define BUF_SIZE 150
 
 struct conf {
     char *label, *(*function)();
     bool cached;
-} config[] = {
-    { "",             get_title,      false },
-    { "",             get_bar,        false },
-    { "OS: ",         get_os,         true  },
-    { "Host: ",       get_host,       true  },
-    { "Kernel: ",     get_kernel,     true  },
-    { "Uptime: ",     get_uptime,     false },
-    { "",             spacer,         false },
-    { "Packages: ",   get_packages,   false },
-    { "Shell: ",      get_shell,      false },
-    { "Resolution: ", get_resolution, false },
-    { "Terminal: ",   get_terminal,   false },
-    { "",             spacer,         false },
-    { "CPU: ",        get_cpu,        true  },
-    { "GPU: ",        get_gpu,        true  },
-    { "Memory: ",     get_memory,     false },
-    { "",             spacer,         false },
-    { "",             get_colors1,    false },
-    { "",             get_colors2,    false },
-};
+} config[] = CONFIG;
 
 Display *display;
 struct utsname uname_info;
@@ -504,7 +484,7 @@ int main(int argc, char *argv[]) {
             // Otherwise, we've got a bit of work to do.
             char *label = config[i].label,
                  *value = get_value(config[i], read_cache, cache_data);
-            printf("\e[1;36m%s%s\e[0m%s\n", LOGO[i], label, value);
+            printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
             free(value);
 
         }

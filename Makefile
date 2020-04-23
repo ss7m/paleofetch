@@ -6,7 +6,7 @@ all: paleofetch
 clean:
 	rm -f fetch
 
-paleofetch: paleofetch.c
+paleofetch: paleofetch.c paleofetch.h config.h
 	$(CC) paleofetch.c -o paleofetch $(CFLAGS)
 	strip paleofetch
 
