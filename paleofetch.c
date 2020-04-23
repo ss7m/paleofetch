@@ -248,8 +248,8 @@ char *get_resolution() {
         char *line = NULL;
         size_t len;
         
-        /* preload resolution with something, in case we cant find a resolution through parsing */
-        strncpy(resolution, "Resolution could not be determined", BUF_SIZE);
+        /* preload resolution with empty string, in case we cant find a resolution through parsing */
+        strncpy(resolution, "", BUF_SIZE);
 
         dir = opendir(dir_name);
         if (dir == NULL) {
@@ -522,16 +522,26 @@ int main(int argc, char *argv[]) {
     }
 
 #define COUNT(x) (int)(sizeof x / sizeof *x)
+    int offset = 0;
 
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
-        if(i >= COUNT(config)) // just print the next line of the logo
+        if(i >= COUNT(config) - offset) // just print the next line of the logo
             puts(LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
-            char *label = config[i].label,
-                 *value = get_value(config[i], read_cache, cache_data);
-            printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+            char *label = config[i+offset].label,
+                 *value = get_value(config[i+offset], read_cache, cache_data);
+            if (strcmp(value, "") != 0) { // check if value is an empty string
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value); // just print if not empty
+            } else {
+                if (strcmp(label, "") != 0) { // check if label is empty, otherwise it's a spacer
+                    ++offset; // print next line of information
+                    label = config[i+offset].label; // read new label and value
+                    value = get_value(config[i+offset], read_cache, cache_data);
+                }
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+            }
             free(value);
 
         }
