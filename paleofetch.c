@@ -87,6 +87,17 @@ void remove_substring(char *str, const char* substring, size_t len) {
     while(*(sub+(++i)) != '\0');
 }
 
+void replace_substring(char *str, const char *sub_str, const char *repl_str, size_t sub_len, size_t repl_len) {
+    char buffer[BUF_SIZE];
+    char *start = strstr(str, sub_str);
+    if (start == NULL) return; // substring not found
+    int start_index = start - str;
+
+    strcpy(buffer, str);
+    strncpy(start, repl_str, repl_len);
+    strcpy(start + repl_len, buffer + start_index + sub_len);
+}
+
 char *get_title() {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
@@ -369,6 +380,8 @@ char *get_cpu() {
     for (int i = 0; i < COUNT(cpu_remove); ++i) {
         remove_substring(cpu_model, cpu_remove[i].substring, cpu_remove[i].length);
     }
+
+    replace_substring(cpu_model, "Core2", "Core 2", 5, 6);
 
     char *cpu = malloc(BUF_SIZE);
     snprintf(cpu, BUF_SIZE, "%s (%d) @ %.1fGHz", cpu_model, num_cores, freq);
