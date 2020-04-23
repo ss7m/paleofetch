@@ -62,47 +62,18 @@ void truncate_spaces(char *str) {
 }
 
 /*
- * Returns index of substring in str, if it is there
- * Assumes that strlen(substring) >= len
- */
-int contains_substring(const char *str, const char*substring, size_t len) {
-    if(len == 0) return -1;
-
-    /* search for substring */
-    int offset = 0;
-    for(;;) {
-        int match = 1;
-        for(size_t i = 0; i < len; i++) {
-            if(*(str+offset+i) == '\0') return -1;
-            else if(*(str+offset+i) != *(substring+i)) {
-                match = 0;
-                break;
-            }
-        }
-
-        if(match) break;
-        offset++;
-    }
-
-    return offset;
-}
-
-/*
  * Removes the first len characters of substring from str
  * Assumes that strlen(substring) >= len
  * Returns index where substring was found, or -1 if substring isn't found
  */
 void remove_substring(char *str, const char* substring, size_t len) {
     /* shift over the rest of the string to remove substring */
-    int offset = contains_substring(str, substring, len);
-    if(offset < 0) return;
+    char *sub = strstr(str, substring);
+    if(sub == NULL) return;
 
     int i = 0;
-    for(;;) {
-        if(*(str+offset+i) == '\0') break;
-        *(str+offset+i) = *(str+offset+i+len);
-        i++;
-    }
+    do *(sub+i) = *(sub+i+len);
+    while(*(sub+(++i)) != '\0');
 }
 
 char *get_title() {
