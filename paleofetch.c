@@ -479,7 +479,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
         if(i >= COUNT(config)) // just print the next line of the logo
-            puts(LOGO[i]);
+            printf(COLOR"%s\n", LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
             char *label = config[i].label,
