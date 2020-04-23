@@ -132,8 +132,15 @@ char *get_bar() {
 }
 
 char *get_os() {
-    char *os = malloc(BUF_SIZE);
-    snprintf(os, BUF_SIZE, "%s %s %s", DISTRO, uname_info.sysname, uname_info.machine);
+    char *os = malloc(BUF_SIZE),
+         *name = malloc(BUF_SIZE);
+    FILE *os_release = fopen("/etc/os-release", "r");
+
+    fscanf(os_release, "NAME=\"%[^\"]+", name);
+    fclose(os_release);
+    snprintf(os, BUF_SIZE, "%s %s", name, uname_info.machine);
+    free(name);
+
     return os;
 }
 
