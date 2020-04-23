@@ -118,7 +118,7 @@ char *get_title() {
     title_length = strlen(hostname) + strlen(username) + 1;
 
     char *title = malloc(BUF_SIZE);
-    snprintf(title, BUF_SIZE, "\e[1;36m%s\e[0m@\e[1;36m%s", username, hostname);
+    snprintf(title, BUF_SIZE, COLOR"%s\e[0m@"COLOR"%s", username, hostname);
 
     return title;
 }
