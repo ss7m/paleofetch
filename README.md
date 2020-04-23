@@ -39,7 +39,37 @@ if it is absent.
 Configuration
 -------------
 
-TODO: Write a guide for configuring paleofetch
+Paleofetch is configured by editing `config.h` and recompiling.
+You can change your logo by including the appropriate header file in the logos directory.
+The color with which paleo fetch draws the logo can be chosen by defining the `COLOR` macro,
+look up ANSI escape codes for information on customizing this.
+
+The last configuration is the `CONFIG` macro, which controls what information paleofetch
+prints. Each entry in this macro should look like
+
+    { "NAME: ",   getter_function, false }, \
+    
+Take note of the trailing comma and backslash. The first piece, `"NAME: "`, sets
+what paleofetch prints before printing the information; this usually tells you what
+bit of information is being shown. The second piece, `getter_function`, sets
+which function paleofetch will call display. Current available getter functions are
+
+* `get_title`: prints `host@user` like in a bash prompt. Host and user will be printed in color.
+* `get_bar`: Meant to be added after `get_title`, underlines the title
+* `get_os`: Prints your operating system (including distrobution)
+* `get_host`: Prints the model of computer
+* `get_kernel`: Prints the version of the linux kernel
+* `get_uptime`: Shows how long linux has been running
+* `get_packages`: Shows how many packages you have installed. Currently only works for pacman.
+* `get_shell`: Shows which shell you are using
+* `get_resolution`: Prints your screen resolution
+* `get_terminal`: Prints the name of your current terminal
+* `get_cpu`: Prints the name of your CPU, number of cores, and maximum frequency
+* `get_gpu`: (Tries to) print your current GPU
+* `get_colors1`, `get_colors2`: Prints the colors of your terminal
+
+To include a blank line between entries, put `SPACER \` between the two lines
+you want to separate.
 
 FAQ
 ---
