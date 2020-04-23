@@ -17,7 +17,7 @@
     { "Terminal: ",   get_terminal,   false }, \
     SPACER \
     { "CPU: ",        get_cpu,        true  }, \
-    { "GPU: ",        get_gpu,        true  }, \
+    { "GPU: ",        get_gpu1,       true  }, \
     { "Memory: ",     get_memory,     false }, \
     SPACER \
     { "",             get_colors1,    false }, \
