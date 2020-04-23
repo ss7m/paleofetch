@@ -358,12 +358,14 @@ char *get_cpu() {
     return cpu;
 }
 
-char *get_gpu() {
+char *find_gpu(int index) {
     // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
     /* it seems that pci_lookup_name needs to be given a buffer, but I can't for the life of my figure out what its for */
     char buffer[BUF_SIZE], *gpu = malloc(BUF_SIZE);
     struct pci_access *pacc;
     struct pci_dev *dev;
+    int gpu_index = 0;
+    bool found = false;
 
     pacc = pci_alloc();
     pci_init(pacc);
@@ -374,17 +376,53 @@ char *get_gpu() {
         pci_fill_info(dev, PCI_FILL_IDENT);
         if(strcmp("VGA compatible controller", pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class)) == 0) {
             strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
-            break;
+            if (gpu_index == index) {
+                found = true;
+                break;
+            } else {
+                ++gpu_index;
+            }
+        } else if (strcmp("3D controller", pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class)) == 0) {
+            strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
+            if (gpu_index == index) {
+                found = true;
+                break;
+            } else {
+                ++gpu_index;
+            }
         }
 
         dev = dev->next;
     }
 
-    remove_substring(gpu, "Corporation", 11);
-    truncate_spaces(gpu);
+    if (found == false) {
+        strncpy(gpu, "", BUF_SIZE); // empty string, so it will not be printed
+    }
 
     pci_cleanup(pacc);
     return gpu;
+}
+
+char *get_gpu1() {
+    char *gpu1 = NULL;
+
+    gpu1 = find_gpu(0);
+
+    remove_substring(gpu1, "Corporation", 11);
+    truncate_spaces(gpu1);
+
+    return gpu1;
+}
+
+char *get_gpu2() {
+    char *gpu2 = NULL;
+
+    gpu2 = find_gpu(1);
+
+    remove_substring(gpu2, "Corporation", 11);
+    truncate_spaces(gpu2);
+
+    return gpu2;
 }
 
 char *get_memory() {
