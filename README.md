@@ -1,7 +1,7 @@
 paleofetch
 ==========
 
-A rewrite of [neofetch](https://github.com/dylanraps/neofetch) in C.
+A rewrite of [neofetch](https://github.com/dylanaraps/neofetch) in C.
 Currently only supports Linux and Xorg.
 
 Example output:
