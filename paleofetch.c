@@ -196,7 +196,7 @@ char *get_uptime() {
     for (int i = 0; i < 3; ++i ) {
         if ((n = seconds / units[i].secs) || i == 2) /* always print minutes */
             len += snprintf(uptime + len, BUF_SIZE - len, 
-                            "%d %s%s, ", n, units[i].name, n > 1 ? "s": "");
+                            "%d %s%s, ", n, units[i].name, n != 1 ? "s": "");
         seconds %= units[i].secs;
     }
 
