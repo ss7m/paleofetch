@@ -521,9 +521,11 @@ int main(int argc, char *argv[]) {
 #define COUNT(x) (int)(sizeof x / sizeof *x)
 
     for (int i = 0; i < COUNT(logo); i++) {
-        if(i >= COUNT(config))
+        // If we've run out of information to show...
+        if(i >= COUNT(config)) // just print the next line of the logo
             puts(logo[i]);
         else {
+            // Otherwise, we've got a bit of work to do.
             char *label = config[i].label,
                  *value = get_value(config[i], read_cache, cache_data);
             printf("%s%s\e[0m%s\n", logo[i], label, value);
@@ -531,23 +533,6 @@ int main(int argc, char *argv[]) {
         }
     }
     puts("\e[0m");
-
-    // for vertically centering the data with the logo
-    //int offset = (COUNT(logo) - COUNT(config)) / 2;
-
-    //for (int i = 0; i < COUNT(logo); ++i) {
-    //    // If we haven't started showing data (or we're done doing so)...
-    //    if(i < offset || i >= offset + COUNT(config))
-    //        puts(logo[i]); // just print the next line of the logo
-    //    else {
-    //        // Otherwise, we've got a bit of work to do.
-    //        char *label = config[i - offset].label,
-    //             *value = get_value(config[i - offset], read_cache, cache_data);
-    //        printf("%s%s\e[0m%s\n", logo[i], label, value);
-    //        free(value);
-    //    }
-    //}
-    //puts("\e[0m");
 
     /* Write out our cache data (if we have any). */
     if(!read_cache && *cache_data) {
