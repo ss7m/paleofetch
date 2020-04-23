@@ -361,7 +361,7 @@ char *get_cpu() {
 char *find_gpu(int index) {
     // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
     /* it seems that pci_lookup_name needs to be given a buffer, but I can't for the life of my figure out what its for */
-    char buffer[BUF_SIZE], *gpu = malloc(BUF_SIZE);
+    char buffer[BUF_SIZE], *device_class, *gpu = malloc(BUF_SIZE);
     struct pci_access *pacc;
     struct pci_dev *dev;
     int gpu_index = 0;
@@ -374,21 +374,14 @@ char *find_gpu(int index) {
 
     while(dev != NULL) {
         pci_fill_info(dev, PCI_FILL_IDENT);
-        if(strcmp("VGA compatible controller", pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class)) == 0) {
+        device_class = pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class);
+        if(strcmp("VGA compatible controller", device_class) == 0 || strcmp("3D controller", device_class) == 0) {
             strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
-            if (gpu_index == index) {
+            if(gpu_index == index) {
                 found = true;
                 break;
             } else {
-                ++gpu_index;
-            }
-        } else if (strcmp("3D controller", pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class)) == 0) {
-            strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
-            if (gpu_index == index) {
-                found = true;
-                break;
-            } else {
-                ++gpu_index;
+                gpu_index++;
             }
         }
 
