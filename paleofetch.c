@@ -395,34 +395,20 @@ char *find_gpu(int index) {
         dev = dev->next;
     }
 
-    if (found == false) {
-        strncpy(gpu, "", BUF_SIZE); // empty string, so it will not be printed
-    }
+    if (found == false) *gpu = '\0'; // empty string, so it will not be printed
 
     pci_cleanup(pacc);
+    remove_substring(gpu, "Corporation", 11);
+    truncate_spaces(gpu);
     return gpu;
 }
 
 char *get_gpu1() {
-    char *gpu1 = NULL;
-
-    gpu1 = find_gpu(0);
-
-    remove_substring(gpu1, "Corporation", 11);
-    truncate_spaces(gpu1);
-
-    return gpu1;
+    return find_gpu(0);
 }
 
 char *get_gpu2() {
-    char *gpu2 = NULL;
-
-    gpu2 = find_gpu(1);
-
-    remove_substring(gpu2, "Corporation", 11);
-    truncate_spaces(gpu2);
-
-    return gpu2;
+    return find_gpu(1);
 }
 
 char *get_memory() {
