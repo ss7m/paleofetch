@@ -229,38 +229,89 @@ char *get_shell() {
 }
 
 char *get_resolution() {
-    int screen = DefaultScreen(display);
-
-    int width = DisplayWidth(display, screen);
-    int height = DisplayHeight(display, screen);
-
+    int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
-    snprintf(resolution, BUF_SIZE, "%dx%d", width, height);
+    
+    if (display != NULL) {
+        screen = DefaultScreen(display);
+    
+        width = DisplayWidth(display, screen);
+        height = DisplayHeight(display, screen);
+
+        snprintf(resolution, BUF_SIZE, "%dx%d", width, height);
+    } else {
+        DIR *dir;
+        struct dirent *entry;
+        char dir_name[] = "/sys/class/drm";
+        char modes_file_name[BUF_SIZE * 2];
+        FILE *modes;
+        char *line = NULL;
+        size_t len;
+        
+        /* preload resolution with something, in case we cant find a resolution through parsing */
+        strncpy(resolution, "Resolution could not be determined", BUF_SIZE);
+
+        dir = opendir(dir_name);
+        if (dir == NULL) {
+            status = -1;
+            halt_and_catch_fire("Could not open /sys/class/drm to determine resolution in tty mode.");
+        }
+        /* parse through all directories and look for a non empty modes file */
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_LNK) {
+                snprintf(modes_file_name, BUF_SIZE * 2, "%s/%s/modes", dir_name, entry->d_name);
+
+                modes = fopen(modes_file_name, "r");
+                if (modes != NULL) {
+                    if (getline(&line, &len, modes) != -1) {
+                        strncpy(resolution, line, BUF_SIZE);
+                        remove_newline(resolution);
+
+                        free(line);
+                        fclose(modes);
+
+                        break;
+                    }
+
+                    fclose(modes);
+                }
+            }
+        }
+        
+        closedir(dir);
+    }
 
     return resolution;
 }
 
 char *get_terminal() {
     unsigned char *prop;
+    char *terminal = malloc(BUF_SIZE);
+
+    /* check if xserver is running or if we are running in a straight tty */
+    if (display != NULL) {   
+
     unsigned long _, // not unused, but we don't need the results
-                  window = RootWindow(display, XDefaultScreen(display));
-    Atom a,
-         active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
-         class = XInternAtom(display, "WM_CLASS", True);
+                  window = RootWindow(display, XDefaultScreen(display));    
+        Atom a,
+             active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
+             class = XInternAtom(display, "WM_CLASS", True);
 
 #define GetProp(property) \
-    XGetWindowProperty(display, window, property, 0, 64, 0, 0, &a, (int *)&_, &_, &_, &prop);
+        XGetWindowProperty(display, window, property, 0, 64, 0, 0, &a, (int *)&_, &_, &_, &prop);
 
-    GetProp(active);
-    window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
-    free(prop);
-    GetProp(class);
+        GetProp(active);
+        window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
+        free(prop);
+        GetProp(class);
 
 #undef GetProp
 
-    char *terminal = malloc(BUF_SIZE);
-    snprintf(terminal, BUF_SIZE, "%s", prop);
-    free(prop);
+        snprintf(terminal, BUF_SIZE, "%s", prop);
+        free(prop);
+    } else {
+        strncpy(terminal, getenv("TERM"), BUF_SIZE); /* fallback to old method */
+    }
 
     return terminal;
 }
@@ -453,10 +504,10 @@ int main(int argc, char *argv[]) {
     status = sysinfo(&my_sysinfo);
     halt_and_catch_fire("sysinfo failed");
     display = XOpenDisplay(NULL);
-    if(display == NULL) {
-        status = -1;
-        halt_and_catch_fire("XOpenDisplay failed");
-    }
+    //if(display == NULL) {
+    //    status = -1;
+    //    halt_and_catch_fire("XOpenDisplay failed");
+    //}
 
     cache = get_cache_file();
     if(argc == 2 && strcmp(argv[1], "--recache") == 0)
@@ -500,7 +551,9 @@ int main(int argc, char *argv[]) {
 
     free(cache);
     free(cache_data);
-    XCloseDisplay(display);
+    if(display != NULL) { 
+        XCloseDisplay(display);
+    }
 
     return 0;
 }
