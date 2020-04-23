@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <dirent.h>
 
@@ -11,30 +12,56 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include "paleofetch.h"
+
 #define DISTRO "Arch"
 #define BUF_SIZE 150
 
+struct conf {
+    char *label, *(*function)();
+    bool cached;
+} config[] = {
+    { "",             get_title,      false },
+    { "",             get_bar,        false },
+    { "OS: ",         get_os,         true  },
+    { "Host: ",       get_host,       true  },
+    { "Kernel: ",     get_kernel,     true  },
+    { "",             spacer,         false },
+    { "Packages: ",   get_packages,   false },
+    { "Shell: ",      get_shell,      false },
+    { "Resolution: ", get_resolution, false },
+    { "Terminal: ",   get_terminal,   false },
+    { "",             spacer,         false },
+    { "CPU: ",        get_cpu,        true  },
+    { "GPU: ",        get_gpu,        true  },
+    { "Memory: ",     get_memory,     false },
+    { "",             spacer,         false },
+    { "",             get_colors1,    false },
+    { "",             get_colors2,    false },
+};
+
 // I copy pasted this from neofetch, in case you were curious
-#define FORMAT_STR \
-"\e[1;36m                  -`                    \e[0m%s\n"\
-"\e[1;36m                 .o+`                   \e[0m%s\n"\
-"\e[1;36m                `ooo/                   OS: \e[0m%s\n"\
-"\e[1;36m               `+oooo:                  Host: \e[0m%s\n"\
-"\e[1;36m              `+oooooo:                 Kernel: \e[0m%s\n"\
-"\e[1;36m              -+oooooo+:                Uptime: \e[0m%s\n"\
-"\e[1;36m            `/:-:++oooo+:\n"\
-"\e[1;36m           `/++++/+++++++:              Packages: \e[0m%s\n"\
-"\e[1;36m          `/++++++++++++++:             Shell: \e[0m%s\n"\
-"\e[1;36m         `/+++ooooooooooooo/`           Resolution: \e[0m%s\n"\
-"\e[1;36m        ./ooosssso++osssssso+`          Terminal: \e[0m%s\n"\
-"\e[1;36m       .oossssso-````/ossssss+`\n"\
-"\e[1;36m      -osssssso.      :ssssssso.        CPU: \e[0m%s\n"\
-"\e[1;36m     :osssssss/        osssso+++.       GPU: \e[0m%s\n"\
-"\e[1;36m    /ossssssss/        +ssssooo/-       Memory: \e[0m%s\n"\
-"\e[1;36m  `/ossssso+/:-        -:/+osssso+-\n"\
-"\e[1;36m `+sso+:-`                 `.-/+oso:    %s\n"\
-"\e[1;36m`++:.                           `-/+/   %s\n"\
-"\e[1;36m.`                                 `/\e[0m\n\n"
+char *logo[] = {
+    "\e[1;36m                  -`                    ",
+    "\e[1;36m                 .o+`                   ",
+    "\e[1;36m                `ooo/                   ",
+    "\e[1;36m               `+oooo:                  ",
+    "\e[1;36m              `+oooooo:                 ",
+    "\e[1;36m              -+oooooo+:                ",
+    "\e[1;36m            `/:-:++oooo+:               ",
+    "\e[1;36m           `/++++/+++++++:              ",
+    "\e[1;36m          `/++++++++++++++:             ",
+    "\e[1;36m         `/+++ooooooooooooo/`           ",
+    "\e[1;36m        ./ooosssso++osssssso+`          ",
+    "\e[1;36m       .oossssso-````/ossssss+`         ",
+    "\e[1;36m      -osssssso.      :ssssssso.        ",
+    "\e[1;36m     :osssssss/        osssso+++.       ",
+    "\e[1;36m    /ossssssss/        +ssssooo/-       ",
+    "\e[1;36m  `/ossssso+/:-        -:/+osssso+-     ",
+    "\e[1;36m `+sso+:-`                 `.-/+oso:    ",
+    "\e[1;36m`++:.                           `-/+/   ",
+    "\e[1;36m.`                                 `/   "
+};
 
 // TODO: Finish it
 
@@ -409,6 +436,10 @@ char *get_colors2() {
     return colors2;
 }
 
+char *spacer() {
+    return calloc(1, 1); // freeable, null-terminated string of length 1
+}
+
 char *get_cache_file() {
     char *cache_file = malloc(BUF_SIZE);
     char *env = getenv("XDG_CACHE_HOME");
@@ -420,10 +451,44 @@ char *get_cache_file() {
     return cache_file;
 }
 
+/* This isn't especially robust, but as long as we're the only one writing
+ * to our cache file, the format is simple, effective, and fast. One way
+ * we might get in trouble would be if the user decided not to have any
+ * sort of sigil (like ':') after their labels. */
+char *search_cache(char *cache_data, char *label) {
+    char *start = strstr(cache_data, label) + strlen(label);
+    char *end = strchr(start, ';');
+
+    char *buf = calloc(1, BUF_SIZE);
+    // skip past the '=' and stop just before the ';'
+    strncpy(buf, start + 1, end - start - 1);
+
+    return buf;
+}
+
+char *get_value(struct conf c, int read_cache, char *cache_data) {
+    char *value;
+
+    // If the user's config specifies that this value should be cached
+    if(c.cached && read_cache) // and we have a cache to read from
+        value = search_cache(cache_data, c.label); // grab it from the cache
+    else {
+        // Otherwise, call the associated function to get the value
+        value = c.function();
+        if(c.cached) { // and append it to our cache data if appropriate
+            char *buf = malloc(BUF_SIZE);
+            sprintf(buf, "%s=%s;", c.label, value);
+            strcat(cache_data, buf);
+            free(buf);
+        }
+    }
+
+    return value;
+}
+
 int main(int argc, char *argv[]) {
-    char *cache;
+    char *cache, *cache_data = NULL;
     FILE *cache_file;
-    char *title, *bar, *os, *kernel, *host, *uptime, *packages, *shell, *resolution, *terminal, *cpu, *gpu, *memory, *colors1, *colors2;
     int read_cache;
 
     status = uname(&uname_info);
@@ -444,60 +509,43 @@ int main(int argc, char *argv[]) {
         read_cache = cache_file != NULL;
     }
 
-    if(read_cache) {
-        os = malloc(BUF_SIZE);
-        host = malloc(BUF_SIZE);
-        kernel = malloc(BUF_SIZE);
-        cpu = malloc(BUF_SIZE);
-        gpu = malloc(BUF_SIZE);
-        fscanf(cache_file, "OS: %[^\n] HOST: %[^\n] KERNEL: %[^\n] CPU: %[^\n] GPU: %[^\n]",
-                os, host, kernel, cpu, gpu);
-        fclose(cache_file);
-    }
+    if(!read_cache)
+        cache_data = calloc(4, BUF_SIZE); // should be enough
     else {
-        os = get_os();
-        host = get_host();
-        kernel = get_kernel();
-        cpu = get_cpu();
-        gpu = get_gpu();
+        size_t len; /* unused */
+        getline(&cache_data, &len, cache_file);
+        fclose(cache_file); // We just need the first (and only) line.
     }
 
-    title = get_title();
-    bar = get_bar();
-    uptime = get_uptime();
-    packages = get_packages();
-    shell = get_shell();
-    resolution = get_resolution();
-    terminal = get_terminal();
-    memory = get_memory();
-    colors1 = get_colors1();
-    colors2 = get_colors2();
+#define COUNT(x) (int)(sizeof x / sizeof *x)
 
-    printf(FORMAT_STR, title, bar, os, host, kernel, uptime, packages, shell, resolution, terminal, cpu, gpu, memory, colors1, colors2);
+    // for vertically centering the data with the logo
+    int offset = (COUNT(logo) - COUNT(config)) / 2;
 
-    if(!read_cache) {
+    for (int i = 0; i < COUNT(logo); ++i) {
+        // If we haven't started showing data (or we're done doing so)...
+        if(i < offset || i >= offset + COUNT(config))
+            puts(logo[i]); // just print the next line of the logo
+        else {
+            // Otherwise, we've got a bit of work to do.
+            char *label = config[i - offset].label,
+                 *value = get_value(config[i - offset], read_cache, cache_data);
+            printf("%s%s\e[0m%s\n", logo[i], label, value);
+            free(value);
+        }
+    }
+    puts("\e[0m");
+
+    /* Write out our cache data (if we have any). */
+    if(!read_cache && *cache_data) {
         cache_file = fopen(cache, "w");
-        fprintf(cache_file, "OS: %s\nHOST: %s\nKERNEL: %s\nCPU: %s\nGPU: %s\n",
-                os, host, kernel, cpu, gpu);
+        fprintf(cache_file, "%s", cache_data);
         fclose(cache_file);
     }
 
-    free(title);
-    free(bar);
-    free(os);
-    free(kernel);
-    free(host);
-    free(uptime);
-    free(packages);
-    free(shell);
-    free(resolution);
-    free(terminal);
-    free(cpu);
-    free(gpu);
-    free(memory);
-    free(colors1);
-    free(colors2);
-
-    XCloseDisplay(display);
     free(cache);
+    free(cache_data);
+    XCloseDisplay(display);
+
+    return 0;
 }
