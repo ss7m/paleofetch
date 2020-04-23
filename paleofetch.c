@@ -537,6 +537,7 @@ int main(int argc, char *argv[]) {
             } else {
                 if (strcmp(label, "") != 0) { // check if label is empty, otherwise it's a spacer
                     ++offset; // print next line of information
+                    free(value); // free memory allocated for empty value
                     label = config[i+offset].label; // read new label and value
                     value = get_value(config[i+offset], read_cache, cache_data);
                 }
