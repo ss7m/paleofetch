@@ -1,8 +1,8 @@
 paleofetch
 ==========
 
-Like neofetch, but incomplete, written in ~500 lines of C instead of 10,000 lines of bash,
-and runs a lot faster. Currently it only supports Arch Linux with X running. 
+A rewrite of [neofetch](https://github.com/dylanraps/neofetch) in C.
+Currently only supports Linux and Xorg.
 
 Example output:
 
@@ -16,6 +16,8 @@ Compiling
 Usage
 -----
 
+After compiling, simply run the executable:
+
     paleofetch
 
 By default, `paleofetch` will cache certain  information (in `$XDG_CACHE_HOME/paleofetch`)
@@ -23,7 +25,13 @@ to speed up subsequent calls. To ignore the contents of the cache (and repopulat
 
     paleofetch --recache
 
-The cache file can safely be removed.
+The cache file can safely be removed at any time, paleofetch will repopulate it
+if it is absent.
+
+Configuration
+-------------
+
+TODO: Write a guide for configuring paleofetch
 
 FAQ
 ---
