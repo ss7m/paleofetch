@@ -17,3 +17,5 @@ char *get_title(),
      *get_colors1(),
      *get_colors2(),
      *spacer();
+
+#define SPACER {"", spacer, false},

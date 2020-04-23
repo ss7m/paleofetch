@@ -10,16 +10,16 @@
     { "Host: ",       get_host,       true  }, \
     { "Kernel: ",     get_kernel,     true  }, \
     { "Uptime: ",     get_uptime,     false }, \
-    { "",             spacer,         false }, \
+    SPACER \
     { "Packages: ",   get_packages,   false }, \
     { "Shell: ",      get_shell,      false }, \
     { "Resolution: ", get_resolution, false }, \
     { "Terminal: ",   get_terminal,   false }, \
-    { "",             spacer,         false }, \
+    SPACER \
     { "CPU: ",        get_cpu,        true  }, \
     { "GPU: ",        get_gpu,        true  }, \
     { "Memory: ",     get_memory,     false }, \
-    { "",             spacer,         false }, \
+    SPACER \
     { "",             get_colors1,    false }, \
     { "",             get_colors2,    false }, \
 };
