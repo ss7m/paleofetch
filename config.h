@@ -1,5 +1,4 @@
 #include "logos/arch.h"
-#define DISTRO "Arch"
 #define COLOR "\e[1;36m"
 
 #define CONFIG \
