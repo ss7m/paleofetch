@@ -504,10 +504,6 @@ int main(int argc, char *argv[]) {
     status = sysinfo(&my_sysinfo);
     halt_and_catch_fire("sysinfo failed");
     display = XOpenDisplay(NULL);
-    //if(display == NULL) {
-    //    status = -1;
-    //    halt_and_catch_fire("XOpenDisplay failed");
-    //}
 
     cache = get_cache_file();
     if(argc == 2 && strcmp(argv[1], "--recache") == 0)
