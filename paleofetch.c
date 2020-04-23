@@ -104,14 +104,20 @@ char *get_bar() {
 
 char *get_os() {
     char *os = malloc(BUF_SIZE),
-         *name = malloc(BUF_SIZE);
+         *name = malloc(BUF_SIZE),
+         *line = NULL;
+    size_t len;
     FILE *os_release = fopen("/etc/os-release", "r");
     if(os_release == NULL) {
         status = -1;
         halt_and_catch_fire("unable to open /etc/os-release");
     }
 
-    fscanf(os_release, "NAME=\"%[^\"]+", name);
+    while (getline(&line, &len, os_release) != -1) {
+        if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+    }
+
+    free(line);
     fclose(os_release);
     snprintf(os, BUF_SIZE, "%s %s", name, uname_info.machine);
     free(name);
