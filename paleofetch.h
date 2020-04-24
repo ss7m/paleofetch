@@ -20,3 +20,4 @@ char *get_title(),
      *spacer();
 
 #define SPACER {"", spacer, false},
+#define REMOVE(A) { (A), sizeof(A) }

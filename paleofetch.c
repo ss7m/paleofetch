@@ -17,7 +17,6 @@
 
 #define BUF_SIZE 150
 #define COUNT(x) (int)(sizeof x / sizeof *x)
-#define REMOVE_CONST_STRING(A, B) remove_substring((A), (B), sizeof(B) - 1)
 
 struct conf {
     char *label, *(*function)();
