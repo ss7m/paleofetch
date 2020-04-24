@@ -16,12 +16,20 @@
 #include "config.h"
 
 #define BUF_SIZE 150
-#define REMOVE_CONST_STRING(A, B) remove_substring((A), (B), sizeof(B) - 1)
+#define COUNT(x) (int)(sizeof x / sizeof *x)
 
 struct conf {
     char *label, *(*function)();
     bool cached;
 } config[] = CONFIG;
+
+typedef struct {
+    char *substring;
+    size_t length;
+} STRING_REMOVE;
+
+STRING_REMOVE cpu_remove[] = CPU_REMOVE;
+STRING_REMOVE gpu_remove[] = GPU_REMOVE;
 
 Display *display;
 struct utsname uname_info;
@@ -356,14 +364,9 @@ char *get_cpu() {
     fclose(cpufreq);
 
     /* remove unneeded information */
-    REMOVE_CONST_STRING(cpu_model, "(R)");
-    REMOVE_CONST_STRING(cpu_model, "(TM)");
-    REMOVE_CONST_STRING(cpu_model, "Dual-Core");
-    REMOVE_CONST_STRING(cpu_model, "Quad-Core");
-    REMOVE_CONST_STRING(cpu_model, "Six-Core");
-    REMOVE_CONST_STRING(cpu_model, "Eight-Core");
-    REMOVE_CONST_STRING(cpu_model, "Core");
-    REMOVE_CONST_STRING(cpu_model, "CPU");
+    for (int i = 0; i < COUNT(cpu_remove); ++i) {
+        remove_substring(cpu_model, cpu_remove[i].substring, cpu_remove[i].length);
+    }
 
     char *cpu = malloc(BUF_SIZE);
     snprintf(cpu, BUF_SIZE, "%s (%d) @ %.1fGHz", cpu_model, num_cores, freq);
@@ -406,8 +409,14 @@ char *find_gpu(int index) {
     if (found == false) *gpu = '\0'; // empty string, so it will not be printed
 
     pci_cleanup(pacc);
-    REMOVE_CONST_STRING(gpu, "Corporation");
+
+    /* remove unneeded information */
+    for (int i = 0; i < COUNT(gpu_remove); ++i) {
+        remove_substring(gpu, gpu_remove[i].substring, gpu_remove[i].length);
+    }
+
     truncate_spaces(gpu);
+
     return gpu;
 }
 
@@ -562,7 +571,6 @@ int main(int argc, char *argv[]) {
         fclose(cache_file); // We just need the first (and only) line.
     }
 
-#define COUNT(x) (int)(sizeof x / sizeof *x)
     int offset = 0;
 
     for (int i = 0; i < COUNT(LOGO); i++) {
