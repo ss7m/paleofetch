@@ -89,15 +89,20 @@ void remove_substring(char *str, const char* substring, size_t len) {
     while(*(sub+(++i)) != '\0');
 }
 
+/*
+ * Replaces the first sub_len characters of sub_str from str
+ * with the first repl_len characters of repl_str
+ * This can be dangerous if repl_str is bigger than sub_str
+ * as no checking is done if str is big enough
+ */
 void replace_substring(char *str, const char *sub_str, const char *repl_str, size_t sub_len, size_t repl_len) {
     char buffer[BUF_SIZE];
     char *start = strstr(str, sub_str);
     if (start == NULL) return; // substring not found
-    int start_index = start - str;
 
-    strcpy(buffer, str);
+    strcpy(buffer, start + sub_len);
     strncpy(start, repl_str, repl_len);
-    strcpy(start + repl_len, buffer + start_index + sub_len);
+    strcpy(start + repl_len, buffer);
 }
 
 char *get_title() {
@@ -105,7 +110,6 @@ char *get_title() {
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
     halt_and_catch_fire("unable to retrieve host name");
-
     char username[BUF_SIZE / 3];
     status = getlogin_r(username, BUF_SIZE / 3);
     halt_and_catch_fire("unable to retrieve login name");
