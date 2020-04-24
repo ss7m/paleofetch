@@ -23,3 +23,22 @@
     { "",             get_colors1,    false }, \
     { "",             get_colors2,    false }, \
 };
+
+#define CPU_REMOVE \
+{ \
+   /* string   length */ \
+   { "(R)",         3 }, \
+   { "(TM)",        4 }, \
+   { "Dual-Core",   9 }, \
+   { "Quad-Core",   9 }, \
+   { "Six-Core",    8 }, \
+   { "Eight-Core", 10 }, \
+   { "Core",        4 }, \
+   { "CPU",         3 }, \
+};
+
+#define GPU_REMOVE \
+{ \
+   /* string    length */ \
+   { "Corporation", 11 }, \
+};
