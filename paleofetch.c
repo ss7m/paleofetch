@@ -313,6 +313,7 @@ char *get_terminal() {
         GetProp(active);
         window = (prop[3] << 24) + (prop[2] << 16) + (prop[1] << 8) + prop[0];
         free(prop);
+        if(!window) goto terminal_fallback;
         GetProp(class);
 
 #undef GetProp
@@ -320,6 +321,7 @@ char *get_terminal() {
         snprintf(terminal, BUF_SIZE, "%s", prop);
         free(prop);
     } else {
+terminal_fallback:
         strncpy(terminal, getenv("TERM"), BUF_SIZE); /* fallback to old method */
     }
 
