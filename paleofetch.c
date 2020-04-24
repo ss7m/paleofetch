@@ -19,6 +19,14 @@
 #define BUF_SIZE 150
 #define REMOVE_CONST_STRING(A, B) remove_substring((A), (B), sizeof(B) - 1)
 
+#define halt_and_catch_fire(fmt, ...) \
+    do { \
+        if(status != 0) { \
+            fprintf(stderr, "paleofetch: " fmt "\n", ##__VA_ARGS__); \
+            exit(status); \
+        } \
+    } while(0)
+
 struct conf {
     char *label, *(*function)();
     bool cached;
@@ -29,12 +37,6 @@ struct utsname uname_info;
 struct sysinfo my_sysinfo;
 int title_length;
 int status;
-
-#define halt_and_catch_fire(fmt, ...) \
-    if(status != 0) { \
-        fprintf(stderr, "paleofetch: " fmt "\n", ##__VA_ARGS__); \
-        exit(status); \
-    }
 
 /*
  * Replaces the first newline character with null terminator
