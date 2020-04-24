@@ -37,10 +37,10 @@ typedef struct {
     char *repl_str;
     size_t length;
     size_t repl_len;
-} STRING_REMOVE;
+} STRING_MODIFY;
 
-STRING_REMOVE cpu_config[] = CPU_CONFIG;
-STRING_REMOVE gpu_config[] = GPU_CONFIG;
+STRING_MODIFY cpu_config[] = CPU_CONFIG;
+STRING_MODIFY gpu_config[] = GPU_CONFIG;
 
 Display *display;
 struct utsname uname_info;
