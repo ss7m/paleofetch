@@ -20,4 +20,5 @@ char *get_title(),
      *spacer();
 
 #define SPACER {"", spacer, false},
-#define REMOVE(A) { (A), sizeof(A) - 1}
+#define REMOVE(A) { (A), NULL, sizeof(A) - 1 , 0 }
+#define REPLACE(A, B) { (A), (B), sizeof(A) - 1, sizeof(B) - 1 }

@@ -24,7 +24,7 @@
     { "",             get_colors2,    false }, \
 };
 
-#define CPU_REMOVE \
+#define CPU_CONFIG \
 { \
    REMOVE("(R)"), \
    REMOVE("(TM)"), \
@@ -36,7 +36,7 @@
    REMOVE("CPU"), \
 };
 
-#define GPU_REMOVE \
+#define GPU_CONFIG \
 { \
     REMOVE("Corporation"), \
 };
