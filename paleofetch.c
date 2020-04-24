@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
@@ -29,12 +30,11 @@ struct sysinfo my_sysinfo;
 int title_length;
 int status;
 
-void halt_and_catch_fire(const char *message) {
-    if(status != 0) {
-        printf("paleofetch: %s\n", message);
-        exit(status);
+#define halt_and_catch_fire(fmt, ...) \
+    if(status != 0) { \
+        fprintf(stderr, "paleofetch: " fmt "\n", ##__VA_ARGS__); \
+        exit(status); \
     }
-}
 
 /*
  * Replaces the first newline character with null terminator
@@ -505,9 +505,13 @@ char *get_cache_file() {
  * we might get in trouble would be if the user decided not to have any
  * sort of sigil (like ':') after their labels. */
 char *search_cache(char *cache_data, char *label) {
-    char *start = strstr(cache_data, label) + strlen(label);
+    char *start = strstr(cache_data, label);
+    if(start == NULL) {
+        status = ENODATA;
+        halt_and_catch_fire("cache miss on key '%s'; need to --recache?", label);
+    }
+    start += strlen(label);
     char *end = strchr(start, ';');
-
     char *buf = calloc(1, BUF_SIZE);
     // skip past the '=' and stop just before the ';'
     strncpy(buf, start + 1, end - start - 1);
