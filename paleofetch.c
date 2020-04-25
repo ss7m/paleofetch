@@ -336,7 +336,7 @@ char *get_cpu() {
     char *cpu_model = malloc(BUF_SIZE / 2);
     char *line = NULL;
     size_t len; /* unused */
-    int num_cores = 0;
+    int num_cores = 0, cpu_freq, prec = 3;
     double freq;
 
     /* read the model name into cpu_model, and increment num_cores every time model name is found */
@@ -356,8 +356,13 @@ char *get_cpu() {
     line = NULL;
 
     if (getline(&line, &len, cpufreq) != -1) {
-        sscanf(line, "%lf", &freq);
-        freq /= 1e6; // convert kHz to GHz
+        sscanf(line, "%d", &cpu_freq);
+        cpu_freq /= 1000; // convert kHz to MHz
+        freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
+        while (cpu_freq % 10 == 0) {
+            --prec;
+            cpu_freq /= 10;
+        }
     } else {
         freq = 0.0; // cpuinfo_max_freq not available?
     }
@@ -371,7 +376,7 @@ char *get_cpu() {
     }
 
     char *cpu = malloc(BUF_SIZE);
-    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.1fGHz", cpu_model, num_cores, freq);
+    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.*fGHz", cpu_model, num_cores, prec, freq);
     free(cpu_model);
 
     truncate_spaces(cpu);
