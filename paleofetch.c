@@ -363,6 +363,7 @@ char *get_cpu() {
             --prec;
             cpu_freq /= 10;
         }
+        if (prec == 0) prec = 1; // we don't want zero decimal places 
     } else {
         freq = 0.0; // cpuinfo_max_freq not available?
     }
