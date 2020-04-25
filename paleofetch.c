@@ -350,28 +350,43 @@ char *get_cpu() {
 
     FILE *cpufreq = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
 
-    if (cpufreq == NULL) {
-        status = -1;
-        halt_and_catch_fire("Unable to open cpufreq");
-    }
-
     line = NULL;
 
-    if (getline(&line, &len, cpufreq) != -1) {
-        sscanf(line, "%d", &cpu_freq);
-        cpu_freq /= 1000; // convert kHz to MHz
-        freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
-        while (cpu_freq % 10 == 0) {
-            --prec;
-            cpu_freq /= 10;
-        }
-        if (prec == 0) prec = 1; // we don't want zero decimal places 
-    } else {
-        freq = 0.0; // cpuinfo_max_freq not available?
-    }
 
+    if (cpufreq != NULL) {
+
+        if (getline(&line, &len, cpufreq) != -1) {
+            sscanf(line, "%d", &cpu_freq);
+            cpu_freq /= 1000; // convert kHz to MHz
+        } else {
+			fclose(cpufreq);
+			free(line);
+            goto cpufreq_fallback;
+        }
+    } else {
+cpufreq_fallback:
+        cpufreq = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
+        if(cpuinfo == NULL) {
+            status = -1;
+            halt_and_catch_fire("Unable to open cpuinfo");
+        }
+        
+        while (getline(&line, &len, cpufreq) != -1) {
+            if (sscanf(line, "cpu MHz : %lf", &freq) > 0) break;
+        }
+        
+        cpu_freq = (int) freq;
+    }
+    
     free(line);
     fclose(cpufreq);
+    
+    freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
+    while (cpu_freq % 10 == 0) {
+        --prec;
+        cpu_freq /= 1;
+    }
+    if (prec == 0) prec = 1; // we don't want zero decimal places
 
     /* remove unneeded information */
     for (int i = 0; i < COUNT(cpu_remove); ++i) {
