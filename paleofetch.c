@@ -343,6 +343,7 @@ static char *get_cpu() {
     size_t len; /* unused */
     int num_cores = 0, cpu_freq, prec = 3;
     double freq;
+    char freq_unit[4];
 
     /* read the model name into cpu_model, and increment num_cores every time model name is found */
     while(getline(&line, &len, cpuinfo) != -1) {
@@ -388,13 +389,20 @@ cpufreq_fallback:
     }
     if (prec == 0) prec = 1; // we don't want zero decimal places
 
+    if (freq < 1.0) {
+        strcpy(freq_unit, "MHz");
+        prec = 0;
+    } else {
+        strcpy(freq_unit, "GHz");
+    }
+
     /* remove unneeded information */
     for (int i = 0; i < COUNT(cpu_remove); ++i) {
         remove_substring(cpu_model, cpu_remove[i].substring, cpu_remove[i].length);
     }
 
     char *cpu = malloc(BUF_SIZE);
-    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.*fGHz", cpu_model, num_cores, prec, freq);
+    snprintf(cpu, BUF_SIZE, "%s (%d) @ %.*f%s", cpu_model, num_cores, prec, freq, freq_unit);
     free(cpu_model);
 
     truncate_spaces(cpu);
