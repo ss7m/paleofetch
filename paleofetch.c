@@ -53,9 +53,11 @@ void remove_newline(char *s) {
 
 /*
  * Cleans up repeated spaces in a string
+ * Trim spaces at the front of a string
  */
 void truncate_spaces(char *str) {
     int src = 0, dst = 0;
+    while(*(str + dst) == ' ') dst++;
 
     while(*(str + dst) != '\0') {
         *(str + src) = *(str + dst);
@@ -65,7 +67,7 @@ void truncate_spaces(char *str) {
         src++;
     }
 
-    *(str +src) = '\0';
+    *(str + src) = '\0';
 }
 
 /*
