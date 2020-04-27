@@ -32,19 +32,15 @@ struct conf {
     bool cached;
 } config[] = CONFIG;
 
-typedef struct {
+struct {
     char *substring;
     size_t length;
-} STRING_REMOVE;
-
-STRING_REMOVE cpu_remove[] = CPU_REMOVE;
-STRING_REMOVE gpu_remove[] = GPU_REMOVE;
+} cpu_remove[] = CPU_REMOVE, gpu_remove[] = GPU_REMOVE;
 
 Display *display;
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
-int title_length;
-int status;
+int title_length, status;
 
 /*
  * Replaces the first newline character with null terminator

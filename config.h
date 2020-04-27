@@ -22,7 +22,7 @@
     SPACER \
     { "",             get_colors1,    false }, \
     { "",             get_colors2,    false }, \
-};
+}
 
 #define CPU_REMOVE \
 { \
@@ -34,9 +34,9 @@
    REMOVE("Eight-Core"), \
    REMOVE("Core"), \
    REMOVE("CPU"), \
-};
+}
 
 #define GPU_REMOVE \
 { \
     REMOVE("Corporation"), \
-};
+}
