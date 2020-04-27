@@ -199,32 +199,33 @@ static char *get_uptime() {
     return uptime;
 }
 
-// full disclosure: I don't know if this is a good idea
-static char *get_packages() {
+static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
     int num_packages = 0;
     DIR * dirp;
     struct dirent *entry;
 
-    dirp = opendir("/var/lib/pacman/local");
+    dirp = opendir(dirname);
 
     if(dirp == NULL) {
         status = -1;
-        halt_and_catch_fire("Do you not have pacman installed? How did you find this?\n"
-                "Please email samfbarr@outlook.com with the details of how you got here.\n"
-                "This information will be very useful for my upcoming demographics survey.");
+        halt_and_catch_fire("You may not have %s installed", dirname);
     }
 
     while((entry = readdir(dirp)) != NULL) {
         if(entry->d_type == DT_DIR) num_packages++;
     }
-    num_packages -= 2; // accounting for . and ..
+    num_packages -= (2 + num_extraneous); // accounting for . and ..
 
     status = closedir(dirp);
 
     char *packages = malloc(BUF_SIZE);
-    snprintf(packages, BUF_SIZE, "%d (pacman)", num_packages);
+    snprintf(packages, BUF_SIZE, "%d (%s)", num_packages, pacname);
 
     return packages;
+}
+
+static char *get_packages_pacman() {
+    return get_packages("/var/lib/pacman/local", "pacman", 0);
 }
 
 static char *get_shell() {
