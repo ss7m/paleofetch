@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,7 +89,7 @@ void remove_substring(char *str, const char* substring, size_t len) {
     while(*(sub+(++i)) != '\0');
 }
 
-char *get_title() {
+static char *get_title() {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
@@ -106,7 +107,7 @@ char *get_title() {
     return title;
 }
 
-char *get_bar() {
+static char *get_bar() {
     char *bar = malloc(BUF_SIZE);
     char *s = bar;
     for(int i = 0; i < title_length; i++) *(s++) = '-';
@@ -114,7 +115,7 @@ char *get_bar() {
     return bar;
 }
 
-char *get_os() {
+static char *get_os() {
     char *os = malloc(BUF_SIZE),
          *name = malloc(BUF_SIZE),
          *line = NULL;
@@ -137,13 +138,13 @@ char *get_os() {
     return os;
 }
 
-char *get_kernel() {
+static char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
     strncpy(kernel, uname_info.release, BUF_SIZE);
     return kernel;
 }
 
-char *get_host() {
+static char *get_host() {
     FILE *product_name = fopen("/sys/devices/virtual/dmi/id/product_name", "r");
 
     if(product_name == NULL) {
@@ -176,7 +177,7 @@ char *get_host() {
     return host;
 }
 
-char *get_uptime() {
+static char *get_uptime() {
     long seconds = my_sysinfo.uptime;
     struct { char *name; int secs; } units[] = {
         { "day",  60 * 60 * 24 },
@@ -199,7 +200,7 @@ char *get_uptime() {
 }
 
 // full disclosure: I don't know if this is a good idea
-char *get_packages() {
+static char *get_packages() {
     int num_packages = 0;
     DIR * dirp;
     struct dirent *entry;
@@ -226,7 +227,7 @@ char *get_packages() {
     return packages;
 }
 
-char *get_shell() {
+static char *get_shell() {
     char *shell = malloc(BUF_SIZE);
     char *shell_path = getenv("SHELL");
     char *shell_name = strrchr(getenv("SHELL"), '/');
@@ -239,7 +240,7 @@ char *get_shell() {
     return shell;
 }
 
-char *get_resolution() {
+static char *get_resolution() {
     int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
     
@@ -295,7 +296,7 @@ char *get_resolution() {
     return resolution;
 }
 
-char *get_terminal() {
+static char *get_terminal() {
     unsigned char *prop;
     char *terminal = malloc(BUF_SIZE);
 
@@ -329,7 +330,7 @@ terminal_fallback:
     return terminal;
 }
 
-char *get_cpu() {
+static char *get_cpu() {
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
         status = -1;
@@ -387,7 +388,7 @@ char *get_cpu() {
     return cpu;
 }
 
-char *find_gpu(int index) {
+static char *find_gpu(int index) {
     // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
     /* it seems that pci_lookup_name needs to be given a buffer, but I can't for the life of my figure out what its for */
     char buffer[BUF_SIZE], *device_class, *gpu = malloc(BUF_SIZE);
@@ -431,15 +432,15 @@ char *find_gpu(int index) {
     return gpu;
 }
 
-char *get_gpu1() {
+static char *get_gpu1() {
     return find_gpu(0);
 }
 
-char *get_gpu2() {
+static char *get_gpu2() {
     return find_gpu(1);
 }
 
-char *get_memory() {
+static char *get_memory() {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
 
@@ -479,7 +480,7 @@ char *get_memory() {
     return memory;
 }
 
-char *get_disk_usage(const char *folder) {
+static char *get_disk_usage(const char *folder) {
     char *disk_usage = malloc(BUF_SIZE);
     long total, used, free;
     int percentage;
@@ -495,15 +496,15 @@ char *get_disk_usage(const char *folder) {
     return disk_usage;
 }
 
-char *get_disk_usage_root() {
+static char *get_disk_usage_root() {
     return get_disk_usage("/");
 }
 
-char *get_disk_usage_home() {
+static char *get_disk_usage_home() {
     return get_disk_usage("/home");
 }
 
-char *get_colors1() {
+static char *get_colors1() {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
 
@@ -516,7 +517,7 @@ char *get_colors1() {
     return colors1;
 }
 
-char *get_colors2() {
+static char *get_colors2() {
     char *colors2 = malloc(BUF_SIZE);
     char *s = colors2;
 
@@ -529,7 +530,7 @@ char *get_colors2() {
     return colors2;
 }
 
-char *spacer() {
+static char *spacer() {
     return calloc(1, 1); // freeable, null-terminated string of length 1
 }
 
