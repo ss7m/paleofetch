@@ -8,6 +8,8 @@
 
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
+#include <sys/statvfs.h>
+
 #include <pci/pci.h>
 
 #include <X11/Xlib.h>
@@ -38,6 +40,7 @@ struct {
 } cpu_remove[] = CPU_REMOVE, gpu_remove[] = GPU_REMOVE;
 
 Display *display;
+struct statvfs file_stats;
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
 int title_length, status;
@@ -474,6 +477,30 @@ char *get_memory() {
     snprintf(memory, BUF_SIZE, "%dMiB / %dMiB (%d%%)", used_memory, total_memory, percentage);
 
     return memory;
+}
+
+char *get_disk_usage(const char *folder) {
+    char *disk_usage = malloc(BUF_SIZE);
+    long total, used, free;
+    int percentage;
+    status = statvfs(folder, &file_stats);
+    halt_and_catch_fire("Error getting disk usage for %s", folder);
+    total = file_stats.f_blocks * file_stats.f_frsize;
+    free = file_stats.f_bfree * file_stats.f_frsize;
+    used = total - free;
+    percentage = (used / (double) total) * 100;
+#define TO_GB(A) ((A) / (1024.0 * 1024 * 1024))
+    snprintf(disk_usage, BUF_SIZE, "%.1fGiB / %.1fGiB (%d%%)", TO_GB(used), TO_GB(total), percentage);
+#undef TO_GB
+    return disk_usage;
+}
+
+char *get_disk_usage_root() {
+    return get_disk_usage("/");
+}
+
+char *get_disk_usage_home() {
+    return get_disk_usage("/home");
 }
 
 char *get_colors1() {

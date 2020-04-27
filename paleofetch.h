@@ -15,6 +15,8 @@ char *get_title(),
      *get_gpu1(),
      *get_gpu2(),
      *get_memory(),
+     *get_disk_usage_root(),
+     *get_disk_usage_home(),
      *get_colors1(),
      *get_colors2(),
      *spacer();
