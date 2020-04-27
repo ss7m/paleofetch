@@ -377,7 +377,7 @@ char *get_cpu() {
     char *cpu = malloc(BUF_SIZE);
     snprintf(cpu, BUF_SIZE, "%s (%d) @ %.*fGHz", cpu_model, num_cores, prec, freq);
     free(cpu_model);
-    while(*cpu == ' ') cpu++;
+
     truncate_spaces(cpu);
     return cpu;
 }
@@ -420,7 +420,7 @@ char *find_gpu(int index) {
     for (int i = 0; i < COUNT(gpu_remove); ++i) {
         remove_substring(gpu, gpu_remove[i].substring, gpu_remove[i].length);
     }
-    while(*gpu == ' ') gpu++;
+
     truncate_spaces(gpu);
 
     return gpu;
