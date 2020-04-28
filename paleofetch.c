@@ -45,7 +45,7 @@ Display *display;
 struct statvfs file_stats;
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
-int title_length, status;
+int title_length, status, package_pipe[2];
 
 /*
  * Replaces the first newline character with null terminator
@@ -200,30 +200,23 @@ static char *get_uptime() {
     return uptime;
 }
 
-static char *get_packages_pacman() {
-    int link[2];
-    pid_t pid;
-    char *packages = malloc(BUF_SIZE);
-    int num_packages = 0;
-    *packages = '\0';
+static void query_package_database() {
+    dup2(package_pipe[1], STDOUT_FILENO);
+    close(package_pipe[0]);
+    close(package_pipe[1]);
+    execl("/bin/pacman", "", "-Qq", (char *)NULL);
+}
 
-    pipe(link);
-    pid = fork();
-    if(pid == 0) {
-        dup2(link[1], STDOUT_FILENO);
-        close(link[0]);
-        close(link[1]);
-        // for some reason it doesn't work without the empty string
-        execl("/bin/pacman", "", "-Q", (char *)NULL); 
-        exit(1);
-    } else {
-        close(link[1]);
-        FILE *output = fdopen(link[0], "r");
-        while((c = fgetc(output)) != EOF) {
-            if(c == '\n') num_packages++;
-        }
-        fclose(output);
+static char *get_packages_pacman() {
+    int c, num_packages = 0;
+    char *packages = malloc(BUF_SIZE);
+
+    close(package_pipe[1]);
+    FILE *output = fdopen(package_pipe[0], "r");
+    while((c = fgetc(output)) != EOF) {
+        if(c == '\n') num_packages++;
     }
+    fclose(output);
 
     snprintf(packages, BUF_SIZE, "%d (pacman)", num_packages);
     return packages;
@@ -587,6 +580,15 @@ char *get_value(struct conf c, int read_cache, char *cache_data) {
 }
 
 int main(int argc, char *argv[]) {
+    pipe(package_pipe);
+    pid_t pid = fork();
+    if(pid < 0) {
+        status = pid;
+        halt_and_catch_fire("fork failed");
+    } else if(pid == 0) {
+        query_package_database();
+    }
+
     char *cache, *cache_data = NULL;
     FILE *cache_file;
     int read_cache;
