@@ -359,14 +359,14 @@ char *get_cpu() {
             sscanf(line, "%d", &cpu_freq);
             cpu_freq /= 1000; // convert kHz to MHz
         } else {
-			fclose(cpufreq);
-			free(line);
+            fclose(cpufreq);
+            free(line);
             goto cpufreq_fallback;
         }
     } else {
 cpufreq_fallback:
         cpufreq = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
-        if(cpuinfo == NULL) {
+        if (cpufreq == NULL) {
             status = -1;
             halt_and_catch_fire("Unable to open cpuinfo");
         }
