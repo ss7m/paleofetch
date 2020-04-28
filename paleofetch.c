@@ -112,6 +112,7 @@ static char *get_title() {
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
     halt_and_catch_fire("unable to retrieve host name");
+
     char username[BUF_SIZE / 3];
     status = getlogin_r(username, BUF_SIZE / 3);
     halt_and_catch_fire("unable to retrieve login name");
