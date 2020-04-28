@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wunused-function"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +9,8 @@
 
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
+#include <sys/statvfs.h>
+
 #include <pci/pci.h>
 
 #include <X11/Xlib.h>
@@ -32,19 +35,16 @@ struct conf {
     bool cached;
 } config[] = CONFIG;
 
-typedef struct {
+struct {
     char *substring;
     size_t length;
-} STRING_REMOVE;
-
-STRING_REMOVE cpu_remove[] = CPU_REMOVE;
-STRING_REMOVE gpu_remove[] = GPU_REMOVE;
+} cpu_remove[] = CPU_REMOVE, gpu_remove[] = GPU_REMOVE;
 
 Display *display;
+struct statvfs file_stats;
 struct utsname uname_info;
 struct sysinfo my_sysinfo;
-int title_length;
-int status;
+int title_length, status;
 
 /*
  * Replaces the first newline character with null terminator
@@ -57,9 +57,11 @@ void remove_newline(char *s) {
 
 /*
  * Cleans up repeated spaces in a string
+ * Trim spaces at the front of a string
  */
 void truncate_spaces(char *str) {
     int src = 0, dst = 0;
+    while(*(str + dst) == ' ') dst++;
 
     while(*(str + dst) != '\0') {
         *(str + src) = *(str + dst);
@@ -69,7 +71,7 @@ void truncate_spaces(char *str) {
         src++;
     }
 
-    *(str +src) = '\0';
+    *(str + src) = '\0';
 }
 
 /*
@@ -87,7 +89,7 @@ void remove_substring(char *str, const char* substring, size_t len) {
     while(*(sub+(++i)) != '\0');
 }
 
-char *get_title() {
+static char *get_title() {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
@@ -105,7 +107,7 @@ char *get_title() {
     return title;
 }
 
-char *get_bar() {
+static char *get_bar() {
     char *bar = malloc(BUF_SIZE);
     char *s = bar;
     for(int i = 0; i < title_length; i++) *(s++) = '-';
@@ -113,7 +115,7 @@ char *get_bar() {
     return bar;
 }
 
-char *get_os() {
+static char *get_os() {
     char *os = malloc(BUF_SIZE),
          *name = malloc(BUF_SIZE),
          *line = NULL;
@@ -136,13 +138,13 @@ char *get_os() {
     return os;
 }
 
-char *get_kernel() {
+static char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
     strncpy(kernel, uname_info.release, BUF_SIZE);
     return kernel;
 }
 
-char *get_host() {
+static char *get_host() {
     FILE *product_name = fopen("/sys/devices/virtual/dmi/id/product_name", "r");
 
     if(product_name == NULL) {
@@ -175,7 +177,7 @@ char *get_host() {
     return host;
 }
 
-char *get_uptime() {
+static char *get_uptime() {
     long seconds = my_sysinfo.uptime;
     struct { char *name; int secs; } units[] = {
         { "day",  60 * 60 * 24 },
@@ -197,35 +199,36 @@ char *get_uptime() {
     return uptime;
 }
 
-// full disclosure: I don't know if this is a good idea
-char *get_packages() {
+static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
     int num_packages = 0;
     DIR * dirp;
     struct dirent *entry;
 
-    dirp = opendir("/var/lib/pacman/local");
+    dirp = opendir(dirname);
 
     if(dirp == NULL) {
         status = -1;
-        halt_and_catch_fire("Do you not have pacman installed? How did you find this?\n"
-                "Please email samfbarr@outlook.com with the details of how you got here.\n"
-                "This information will be very useful for my upcoming demographics survey.");
+        halt_and_catch_fire("You may not have %s installed", dirname);
     }
 
     while((entry = readdir(dirp)) != NULL) {
         if(entry->d_type == DT_DIR) num_packages++;
     }
-    num_packages -= 2; // accounting for . and ..
+    num_packages -= (2 + num_extraneous); // accounting for . and ..
 
     status = closedir(dirp);
 
     char *packages = malloc(BUF_SIZE);
-    snprintf(packages, BUF_SIZE, "%d (pacman)", num_packages);
+    snprintf(packages, BUF_SIZE, "%d (%s)", num_packages, pacname);
 
     return packages;
 }
 
-char *get_shell() {
+static char *get_packages_pacman() {
+    return get_packages("/var/lib/pacman/local", "pacman", 0);
+}
+
+static char *get_shell() {
     char *shell = malloc(BUF_SIZE);
     char *shell_path = getenv("SHELL");
     char *shell_name = strrchr(getenv("SHELL"), '/');
@@ -238,7 +241,7 @@ char *get_shell() {
     return shell;
 }
 
-char *get_resolution() {
+static char *get_resolution() {
     int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
     
@@ -294,7 +297,7 @@ char *get_resolution() {
     return resolution;
 }
 
-char *get_terminal() {
+static char *get_terminal() {
     unsigned char *prop;
     char *terminal = malloc(BUF_SIZE);
 
@@ -328,7 +331,7 @@ terminal_fallback:
     return terminal;
 }
 
-char *get_cpu() {
+static char *get_cpu() {
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
         status = -1;
@@ -401,7 +404,7 @@ cpufreq_fallback:
     return cpu;
 }
 
-char *find_gpu(int index) {
+static char *find_gpu(int index) {
     // inspired by https://github.com/pciutils/pciutils/edit/master/example.c
     /* it seems that pci_lookup_name needs to be given a buffer, but I can't for the life of my figure out what its for */
     char buffer[BUF_SIZE], *device_class, *gpu = malloc(BUF_SIZE);
@@ -445,15 +448,15 @@ char *find_gpu(int index) {
     return gpu;
 }
 
-char *get_gpu1() {
+static char *get_gpu1() {
     return find_gpu(0);
 }
 
-char *get_gpu2() {
+static char *get_gpu2() {
     return find_gpu(1);
 }
 
-char *get_memory() {
+static char *get_memory() {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
 
@@ -493,7 +496,31 @@ char *get_memory() {
     return memory;
 }
 
-char *get_colors1() {
+static char *get_disk_usage(const char *folder) {
+    char *disk_usage = malloc(BUF_SIZE);
+    long total, used, free;
+    int percentage;
+    status = statvfs(folder, &file_stats);
+    halt_and_catch_fire("Error getting disk usage for %s", folder);
+    total = file_stats.f_blocks * file_stats.f_frsize;
+    free = file_stats.f_bfree * file_stats.f_frsize;
+    used = total - free;
+    percentage = (used / (double) total) * 100;
+#define TO_GB(A) ((A) / (1024.0 * 1024 * 1024))
+    snprintf(disk_usage, BUF_SIZE, "%.1fGiB / %.1fGiB (%d%%)", TO_GB(used), TO_GB(total), percentage);
+#undef TO_GB
+    return disk_usage;
+}
+
+static char *get_disk_usage_root() {
+    return get_disk_usage("/");
+}
+
+static char *get_disk_usage_home() {
+    return get_disk_usage("/home");
+}
+
+static char *get_colors1() {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
 
@@ -506,7 +533,7 @@ char *get_colors1() {
     return colors1;
 }
 
-char *get_colors2() {
+static char *get_colors2() {
     char *colors2 = malloc(BUF_SIZE);
     char *s = colors2;
 
@@ -519,7 +546,7 @@ char *get_colors2() {
     return colors2;
 }
 
-char *spacer() {
+static char *spacer() {
     return calloc(1, 1); // freeable, null-terminated string of length 1
 }
 

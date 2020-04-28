@@ -1,4 +1,4 @@
-CFLAGS=-O3 -Wall -Wextra -lX11 -lpci
+CFLAGS=-O2 -Wall -Wextra -lX11 -lpci
 PREFIX=$(HOME)/.local
 CACHE=$(shell if [ "$$XDG_CACHE_HOME" ]; then echo "$$XDG_CACHE_HOME"; else echo "$$HOME"/.cache; fi)
 
