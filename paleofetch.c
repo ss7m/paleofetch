@@ -387,7 +387,7 @@ cpufreq_fallback:
     freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
     while (cpu_freq % 10 == 0) {
         --prec;
-        cpu_freq /= 1;
+        cpu_freq /= 10;
     }
     if (prec == 0) prec = 1; // we don't want zero decimal places
 
