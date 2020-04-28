@@ -352,12 +352,9 @@ static char *get_cpu() {
     fclose(cpuinfo);
 
     FILE *cpufreq = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
-
     line = NULL;
 
-
     if (cpufreq != NULL) {
-
         if (getline(&line, &len, cpufreq) != -1) {
             sscanf(line, "%d", &cpu_freq);
             cpu_freq /= 1000; // convert kHz to MHz
