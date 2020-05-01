@@ -343,7 +343,7 @@ static char *get_cpu() {
     size_t len; /* unused */
     int num_cores = 0, cpu_freq, prec = 3;
     double freq;
-    char freq_unit[4];
+    char freq_unit[] = "GHz";
 
     /* read the model name into cpu_model, and increment num_cores every time model name is found */
     while(getline(&line, &len, cpuinfo) != -1) {
@@ -371,29 +371,30 @@ cpufreq_fallback:
             status = -1;
             halt_and_catch_fire("Unable to open cpuinfo");
         }
-        
+
         while (getline(&line, &len, cpufreq) != -1) {
             if (sscanf(line, "cpu MHz : %lf", &freq) > 0) break;
         }
-        
+
         cpu_freq = (int) freq;
     }
-    
+
     free(line);
     fclose(cpufreq);
-    
-    freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
-    while (cpu_freq % 10 == 0) {
-        --prec;
-        cpu_freq /= 10;
-    }
-    if (prec == 0) prec = 1; // we don't want zero decimal places
 
-    if (freq < 1.0) {
-        strcpy(freq_unit, "MHz");
-        prec = 0;
+    if (cpu_freq < 1000) {
+        freq = (double) cpu_freq;
+        freq_unit[0] = 'M'; // make MHz from GHz
+        prec = 0; // show frequency as integer value
     } else {
-        strcpy(freq_unit, "GHz");
+        freq = cpu_freq / 1000.0; // convert MHz to GHz and cast to double
+
+        while (cpu_freq % 10 == 0) {
+            --prec;
+            cpu_freq /= 10;
+        }
+
+        if (prec == 0) prec = 1; // we don't want zero decimal places
     }
 
     /* remove unneeded information */
