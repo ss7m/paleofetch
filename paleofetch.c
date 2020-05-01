@@ -326,6 +326,10 @@ static char *get_terminal() {
     } else {
 terminal_fallback:
         strncpy(terminal, getenv("TERM"), BUF_SIZE); /* fallback to old method */
+        /* in tty, $TERM is simply returned as "linux"; in this case get actual tty name */
+        if (strcmp(terminal, "linux") == 0) {
+            strncpy(terminal, ttyname(STDIN_FILENO), BUF_SIZE);
+        }
     }
 
     return terminal;
