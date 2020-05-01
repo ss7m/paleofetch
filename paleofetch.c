@@ -94,13 +94,17 @@ void remove_substring(char *str, const char* substring, size_t len) {
 /*
  * Replaces the first sub_len characters of sub_str from str
  * with the first repl_len characters of repl_str
- * This can be dangerous if repl_str is bigger than sub_str
- * as no checking is done if str is big enough
  */
 void replace_substring(char *str, const char *sub_str, const char *repl_str, size_t sub_len, size_t repl_len) {
-    char buffer[BUF_SIZE];
+    char buffer[BUF_SIZE / 2];
     char *start = strstr(str, sub_str);
     if (start == NULL) return; // substring not found
+
+    /* check if we have enough space for new substring */
+    if (strlen(str) - sub_len + repl_len >= BUF_SIZE / 2) {
+        status = -1;
+        halt_and_catch_fire("new substring too long to replace");
+    }
 
     strcpy(buffer, start + sub_len);
     strncpy(start, repl_str, repl_len);
