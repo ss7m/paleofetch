@@ -85,6 +85,15 @@ The booleans in `CONFIG` tell paleofetch whether you want to cache an entry.
 When cached, paleofetch will save the value and not recompute it whenever you run paleofetch
 (unless you specify the `--recache` option).
 
+The CPU and GPU name can be configured as well. This is done under the CPU_CONFIG and GPU_CONFIG section
+in the config.h file. Two macros are provided to customize and tidy up the model names:
+
+* `REMOVE(string)`: removes the first occurence of `string`
+* `REPLACE(string1, string2)`: replaces the first occurence of `string1` with `string2`
+
+Don't forget to run paleofetch with the --recache flag after compiling it with your new
+configuration, otherwise it will still show the old name for already cached entries.
+
 FAQ
 ---
 

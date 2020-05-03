@@ -37,8 +37,10 @@ struct conf {
 
 struct {
     char *substring;
+    char *repl_str;
     size_t length;
-} cpu_remove[] = CPU_REMOVE, gpu_remove[] = GPU_REMOVE;
+    size_t repl_len;
+} cpu_config[] = CPU_CONFIG, gpu_config[] = GPU_CONFIG;
 
 Display *display;
 struct statvfs file_stats;
@@ -87,6 +89,26 @@ void remove_substring(char *str, const char* substring, size_t len) {
     int i = 0;
     do *(sub+i) = *(sub+i+len);
     while(*(sub+(++i)) != '\0');
+}
+
+/*
+ * Replaces the first sub_len characters of sub_str from str
+ * with the first repl_len characters of repl_str
+ */
+void replace_substring(char *str, const char *sub_str, const char *repl_str, size_t sub_len, size_t repl_len) {
+    char buffer[BUF_SIZE / 2];
+    char *start = strstr(str, sub_str);
+    if (start == NULL) return; // substring not found
+
+    /* check if we have enough space for new substring */
+    if (strlen(str) - sub_len + repl_len >= BUF_SIZE / 2) {
+        status = -1;
+        halt_and_catch_fire("new substring too long to replace");
+    }
+
+    strcpy(buffer, start + sub_len);
+    strncpy(start, repl_str, repl_len);
+    strcpy(start + repl_len, buffer);
 }
 
 static char *get_title() {
@@ -402,8 +424,12 @@ cpufreq_fallback:
     }
 
     /* remove unneeded information */
-    for (int i = 0; i < COUNT(cpu_remove); ++i) {
-        remove_substring(cpu_model, cpu_remove[i].substring, cpu_remove[i].length);
+    for (int i = 0; i < COUNT(cpu_config); ++i) {
+        if (cpu_config[i].repl_str == NULL) {
+            remove_substring(cpu_model, cpu_config[i].substring, cpu_config[i].length);
+        } else {
+            replace_substring(cpu_model, cpu_config[i].substring, cpu_config[i].repl_str, cpu_config[i].length, cpu_config[i].repl_len);
+        }
     }
 
     char *cpu = malloc(BUF_SIZE);
@@ -449,8 +475,12 @@ static char *find_gpu(int index) {
     pci_cleanup(pacc);
 
     /* remove unneeded information */
-    for (int i = 0; i < COUNT(gpu_remove); ++i) {
-        remove_substring(gpu, gpu_remove[i].substring, gpu_remove[i].length);
+    for (int i = 0; i < COUNT(gpu_config); ++i) {
+        if (gpu_config[i].repl_str == NULL) {
+            remove_substring(gpu, gpu_config[i].substring, gpu_config[i].length);
+        } else {
+            replace_substring(gpu, gpu_config[i].substring, gpu_config[i].repl_str, gpu_config[i].length, gpu_config[i].repl_len);
+        }
     }
 
     truncate_spaces(gpu);
