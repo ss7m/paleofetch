@@ -168,13 +168,11 @@ static char *get_os() {
         fclose(os_release_bedrock);
     }
     
-    if (os_release_etc != NULL) {
-        if (os_release_bedrock == NULL) {
-            while (getline(&line, &len, os_release_etc) != -1) {
-                if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
-            }
-            fclose(os_release_etc);
+    if (os_release_etc != NULL && os_release_bedrock == NULL) {
+        while (getline(&line, &len, os_release_etc) != -1) {
+            if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
         }
+        fclose(os_release_etc);
     }
 
 
