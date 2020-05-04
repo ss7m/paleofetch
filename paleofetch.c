@@ -153,18 +153,32 @@ static char *get_os() {
          *name = malloc(BUF_SIZE),
          *line = NULL;
     size_t len;
-    FILE *os_release = fopen("/etc/os-release", "r");
-    if(os_release == NULL) {
+    FILE *os_release_bedrock = fopen("/bedrock/etc/os-release", "r");
+    FILE *os_release_etc = fopen("/etc/os-release", "r");
+
+    if (os_release_etc == NULL){
         status = -1;
         halt_and_catch_fire("unable to open /etc/os-release");
     }
 
-    while (getline(&line, &len, os_release) != -1) {
-        if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+    if(os_release_bedrock != NULL) {
+        while (getline(&line, &len, os_release_bedrock) != -1) {
+            if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+        }
+        fclose(os_release_bedrock);
+    }
+    
+    if (os_release_etc != NULL) {
+        if (os_release_bedrock == NULL) {
+            while (getline(&line, &len, os_release_etc) != -1) {
+                if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+            }
+            fclose(os_release_etc);
+        }
     }
 
+
     free(line);
-    fclose(os_release);
     snprintf(os, BUF_SIZE, "%s %s", name, uname_info.machine);
     free(name);
 

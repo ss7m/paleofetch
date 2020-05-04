@@ -1,4 +1,5 @@
 #include "logos/arch.h"
+#include "logos/bedrock.h"
 #define COLOR "\e[1;36m"
 
 #define CONFIG \

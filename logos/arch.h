@@ -1,5 +1,5 @@
 // This was stolen from neofetch
-char *LOGO[] = {
+char *ARCH_LOGO[] = {
     "                  -`                    ",
     "                 .o+`                   ",
     "                `ooo/                   ",
