@@ -437,6 +437,9 @@ cpufreq_fallback:
     free(cpu_model);
 
     truncate_spaces(cpu);
+
+    if(num_cores == 0)
+        *cpu = '\0';
     return cpu;
 }
 
