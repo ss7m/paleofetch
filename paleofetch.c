@@ -725,6 +725,7 @@ int main(int argc, char *argv[]) {
     }
 
     int offset = 0;
+    char *LOGO = *ARCH_LOGO;
 
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
