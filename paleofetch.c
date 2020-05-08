@@ -222,16 +222,24 @@ static char *get_uptime() {
 }
 
 static char *get_battery_percentage() {
-    char *battery_percentage = malloc(BUF_SIZE); /* , buffer[BUF_SIZE/2]; */
-    FILE *battery_percentage_file;
+    char *battery_percentage = malloc(BUF_SIZE), battery_status[BUF_SIZE/2];
+    FILE *battery_percentage_file, *battery_status_file;
 
     if((battery_percentage_file = fopen("/sys/class/power_supply/BAT0/capacity", "r")) != NULL) {
         fread(battery_percentage, 1, BUF_SIZE/2, battery_percentage_file);
         remove_newline(battery_percentage);
-        /* strcat(host, " "); */
-        /* fread(buffer, 1, BUF_SIZE/2, product_version); */
-        /* remove_newline(buffer); */
-        /* strcat(host, buffer); */
+        if((battery_status_file = fopen("/sys/class/power_supply/BAT0/status", "r")) != NULL) {
+            fread(battery_status, 1, BUF_SIZE/2, battery_status_file);
+            remove_newline(battery_status);
+            strcat(battery_percentage, " [");
+            strcat(battery_percentage, battery_status);
+            strcat(battery_percentage, "]");
+        }
+        else {
+            strcat(battery_percentage, " [Unknown]");
+        }
+
+        fclose(battery_status_file);
     }
 
     fclose(battery_percentage_file);
