@@ -18,6 +18,7 @@
 
 #include "paleofetch.h"
 #include "config.h"
+#include "battery_config.h"
 
 #define BUF_SIZE 150
 #define COUNT(x) (int)(sizeof x / sizeof *x)
@@ -226,11 +227,11 @@ static char *get_battery_percentage() {
     char *battery_percentage = malloc(BUF_SIZE), battery_status[BUF_SIZE/2];
     FILE *battery_percentage_file, *battery_status_file;
 
-    if((battery_percentage_file = fopen("/sys/class/power_supply/BAT0/capacity", "r")) != NULL) {
+    if((battery_percentage_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) != NULL) {
         fread(battery_percentage, 1, BUF_SIZE/2, battery_percentage_file);
         remove_newline(battery_percentage);
         strcat(battery_percentage, "% [");
-        if((battery_status_file = fopen("/sys/class/power_supply/BAT0/status", "r")) != NULL) {
+        if((battery_status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
             fread(battery_status, 1, BUF_SIZE/2, battery_status_file);
             remove_newline(battery_status);
             strcat(battery_percentage, battery_status);
