@@ -241,15 +241,13 @@ static char *get_battery_percentage() {
     if((battery_percentage_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) != NULL) {
         // at most 100, which is 3 characters
         fread(battery_percentage, 1, 3, battery_percentage_file);
-        int battery_percentage_length = remove_newline_get_length(battery_percentage);
-        char* battery_percentage_end = battery_percentage + battery_percentage_length;
-        strcat(battery_percentage_end, "% [");
-        battery_percentage_end += 3;
+        remove_newline(battery_percentage);
+        strcat(battery_percentage, "% [");
         if((battery_status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
             fread(battery_status, 1, 12, battery_status_file);
-            int battery_status_length = remove_newline_get_length(battery_status);
-            strcat(battery_percentage_end, battery_status);
-            strcat(battery_percentage_end + battery_status_length, "]");
+            remove_newline(battery_status);
+            strcat(battery_percentage, battery_status);
+            strcat(battery_percentage, "]");
         }
         else {
             strcat(battery_percentage, "Unknown]");
