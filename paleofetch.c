@@ -228,15 +228,15 @@ static char *get_battery_percentage() {
     if((battery_percentage_file = fopen("/sys/class/power_supply/BAT0/capacity", "r")) != NULL) {
         fread(battery_percentage, 1, BUF_SIZE/2, battery_percentage_file);
         remove_newline(battery_percentage);
+        strcat(battery_percentage, "% [");
         if((battery_status_file = fopen("/sys/class/power_supply/BAT0/status", "r")) != NULL) {
             fread(battery_status, 1, BUF_SIZE/2, battery_status_file);
             remove_newline(battery_status);
-            strcat(battery_percentage, " [");
             strcat(battery_percentage, battery_status);
             strcat(battery_percentage, "]");
         }
         else {
-            strcat(battery_percentage, " [Unknown]");
+            strcat(battery_percentage, "Unknown]");
         }
 
         fclose(battery_status_file);
