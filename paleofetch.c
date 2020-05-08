@@ -59,6 +59,17 @@ void remove_newline(char *s) {
 }
 
 /*
+ * Replaces the first newline character with null terminator
+ * and returns the length of the string
+ */
+int remove_newline_get_length(char *s) {
+    int i;
+    for (i = 0; *s != '\0' && *s != '\n'; s++, i++);
+    *s = '\0';
+    return i;
+}
+
+/*
  * Cleans up repeated spaces in a string
  * Trim spaces at the front of a string
  */
