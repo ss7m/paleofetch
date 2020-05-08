@@ -241,6 +241,9 @@ static char *get_battery_percentage() {
 
         fclose(battery_status_file);
     }
+    else {
+        halt_and_catch_fire("unable to get battery information");
+    }
 
     fclose(battery_percentage_file);
     return battery_percentage;
