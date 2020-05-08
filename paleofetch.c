@@ -235,24 +235,24 @@ static char *get_uptime() {
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 static char *get_battery_percentage() {
     // battery status is at most 11 characters: "discharging"
-    char *battery_percentage = malloc(BUF_SIZE / 2);
+    char *battery_percentage = malloc(BUF_SIZE / 2), battery_status[12];
     FILE *battery_percentage_file, *battery_status_file;
 
     if((battery_percentage_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) != NULL) {
         // at most 100, which is 3 characters
-        // read 4 so that the string is null or newline terminated even at 100
-        fread(battery_percentage, 1, 4, battery_percentage_file);
+        fread(battery_percentage, 1, 3, battery_percentage_file);
         int battery_percentage_length = remove_newline_get_length(battery_percentage);
         char* battery_percentage_end = battery_percentage + battery_percentage_length;
         strcat(battery_percentage_end, "% [");
         battery_percentage_end += 3;
         if((battery_status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
-            fread(battery_percentage_end, 1, 12, battery_status_file);
-            int battery_status_length = remove_newline_get_length(battery_percentage_end);
+            fread(battery_status, 1, 12, battery_status_file);
+            int battery_status_length = remove_newline_get_length(battery_status);
+            strcat(battery_percentage_end, battery_status);
             strcat(battery_percentage_end + battery_status_length, "]");
         }
         else {
-            strcat(battery_percentage_end, "Unknown]");
+            strcat(battery_percentage, "Unknown]");
         }
 
         fclose(battery_status_file);
