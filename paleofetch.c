@@ -224,15 +224,17 @@ static char *get_uptime() {
 
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 static char *get_battery_percentage() {
-    char *battery_percentage = malloc(BUF_SIZE), battery_status[BUF_SIZE/2];
+    // battery status is at most 11 characters: "discharging"
+    char *battery_percentage = malloc(BUF_SIZE / 2), battery_status[12];
     FILE *battery_percentage_file, *battery_status_file;
 
     if((battery_percentage_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) != NULL) {
-        fread(battery_percentage, 1, BUF_SIZE/2, battery_percentage_file);
+        // at most 100, which is 3 characters
+        fread(battery_percentage, 1, 3, battery_percentage_file);
         remove_newline(battery_percentage);
         strcat(battery_percentage, "% [");
         if((battery_status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
-            fread(battery_status, 1, BUF_SIZE/2, battery_status_file);
+            fread(battery_status, 1, 12, battery_status_file);
             remove_newline(battery_status);
             strcat(battery_percentage, battery_status);
             strcat(battery_percentage, "]");
