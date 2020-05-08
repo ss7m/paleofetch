@@ -8,6 +8,7 @@ clean:
 	rm -f paleofetch $(CACHE)/paleofetch
 
 paleofetch: paleofetch.c paleofetch.h config.h
+	./battery_config.sh
 	$(CC) paleofetch.c -o paleofetch $(CFLAGS)
 	strip paleofetch
 
