@@ -221,6 +221,23 @@ static char *get_uptime() {
     return uptime;
 }
 
+static char *get_battery_percentage() {
+    char *battery_percentage = malloc(BUF_SIZE); /* , buffer[BUF_SIZE/2]; */
+    FILE *battery_percentage_file;
+
+    if((battery_percentage_file = fopen("/sys/class/power_supply/BAT0/capacity", "r")) != NULL) {
+        fread(battery_percentage, 1, BUF_SIZE/2, battery_percentage_file);
+        remove_newline(battery_percentage);
+        /* strcat(host, " "); */
+        /* fread(buffer, 1, BUF_SIZE/2, product_version); */
+        /* remove_newline(buffer); */
+        /* strcat(host, buffer); */
+    }
+
+    fclose(battery_percentage_file);
+    return battery_percentage;
+}
+
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
     int num_packages = 0;
     DIR * dirp;
