@@ -221,6 +221,7 @@ static char *get_uptime() {
     return uptime;
 }
 
+// returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 static char *get_battery_percentage() {
     char *battery_percentage = malloc(BUF_SIZE), battery_status[BUF_SIZE/2];
     FILE *battery_percentage_file, *battery_status_file;
