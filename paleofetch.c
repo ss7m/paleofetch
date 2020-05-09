@@ -58,6 +58,17 @@ void remove_newline(char *s) {
 }
 
 /*
+ * Replaces the first newline character with null terminator
+ * and returns the length of the string
+ */
+int remove_newline_get_length(char *s) {
+    int i;
+    for (i = 0; *s != '\0' && *s != '\n'; s++, i++);
+    *s = '\0';
+    return i;
+}
+
+/*
  * Cleans up repeated spaces in a string
  * Trim spaces at the front of a string
  */
@@ -219,6 +230,37 @@ static char *get_uptime() {
     // null-terminate at the trailing comma
     uptime[len - 2] = '\0';
     return uptime;
+}
+
+// returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
+// Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
+static char *get_battery_percentage() {
+  int battery_capacity;
+  FILE *capacity_file, *status_file;
+  char battery_status[12] = "Unknown";
+
+  if ((capacity_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) == NULL) {
+    status = ENOENT;
+    halt_and_catch_fire("Unable to get battery information");
+  }
+
+  fscanf(capacity_file, "%d", &battery_capacity);
+  fclose(capacity_file);
+
+  if ((status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
+    fscanf(status_file, "%s", battery_status);
+    fclose(status_file);
+  }
+
+  // max length of resulting string is 19
+  // one byte for padding incase there is a newline
+  // 100% [Discharging]
+  // 1234567890123456789
+  char *battery = malloc(20);
+
+  snprintf(battery, 20, "%d%% [%s]", battery_capacity, battery_status);
+
+  return battery;
 }
 
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
