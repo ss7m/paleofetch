@@ -18,7 +18,6 @@
 
 #include "paleofetch.h"
 #include "config.h"
-#include "battery_config.h"
 
 #define BUF_SIZE 150
 #define COUNT(x) (int)(sizeof x / sizeof *x)
