@@ -233,34 +233,34 @@ static char *get_uptime() {
 }
 
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
+// Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
 static char *get_battery_percentage() {
-    // battery status is at most 11 characters: "discharging"
-    char *battery_percentage = malloc(BUF_SIZE / 2), battery_status[12];
-    FILE *battery_percentage_file, *battery_status_file;
+  int battery_capacity;
+  FILE *capacity_file, *status_file;
+  char battery_status[12] = "Unknown";
 
-    if((battery_percentage_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) != NULL) {
-        // at most 100, which is 3 characters
-        fread(battery_percentage, 1, 3, battery_percentage_file);
-        remove_newline(battery_percentage);
-        strcat(battery_percentage, "% [");
-        if((battery_status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
-            fread(battery_status, 1, 12, battery_status_file);
-            remove_newline(battery_status);
-            strcat(battery_percentage, battery_status);
-            strcat(battery_percentage, "]");
-        }
-        else {
-            strcat(battery_percentage, "Unknown]");
-        }
+  if ((capacity_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) == NULL) {
+    status = ENOENT;
+    halt_and_catch_fire("Unable to get battery information");
+  }
 
-        fclose(battery_status_file);
-    }
-    else {
-        halt_and_catch_fire("unable to get battery information");
-    }
+  fscanf(capacity_file, "%d", &battery_capacity);
+  fclose(capacity_file);
 
-    fclose(battery_percentage_file);
-    return battery_percentage;
+  if ((status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
+    fscanf(status_file, "%s", battery_status);
+    fclose(status_file);
+  }
+
+  // max length of resulting string is 19
+  // one byte for padding incase there is a newline
+  // 100% [Discharging]
+  // 1234567890123456789
+  char *battery = malloc(20);
+
+  snprintf(battery, 20, "%d%% [%s]", battery_capacity, battery_status);
+
+  return battery;
 }
 
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
