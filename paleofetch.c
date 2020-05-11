@@ -122,7 +122,7 @@ void replace_substring(char *str, const char *sub_str, const char *repl_str, siz
     strcpy(start + repl_len, buffer);
 }
 
-static char *get_title() {
+static char *get_title(char** label) {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
@@ -140,7 +140,7 @@ static char *get_title() {
     return title;
 }
 
-static char *get_bar() {
+static char *get_bar(char** label) {
     char *bar = malloc(BUF_SIZE);
     char *s = bar;
     for(int i = 0; i < title_length; i++) *(s++) = '-';
@@ -148,7 +148,7 @@ static char *get_bar() {
     return bar;
 }
 
-static char *get_os() {
+static char *get_os(char** label) {
     char *os = malloc(BUF_SIZE),
          *name = malloc(BUF_SIZE),
          *line = NULL;
@@ -171,13 +171,13 @@ static char *get_os() {
     return os;
 }
 
-static char *get_kernel() {
+static char *get_kernel(char** label) {
     char *kernel = malloc(BUF_SIZE);
     strncpy(kernel, uname_info.release, BUF_SIZE);
     return kernel;
 }
 
-static char *get_host() {
+static char *get_host(char** label) {
     char *host = malloc(BUF_SIZE), buffer[BUF_SIZE/2];
     FILE *product_name, *product_version, *model;
 
@@ -210,7 +210,7 @@ model_fallback:
     return NULL;
 }
 
-static char *get_uptime() {
+static char *get_uptime(char** label) {
     long seconds = my_sysinfo.uptime;
     struct { char *name; int secs; } units[] = {
         { "day",  60 * 60 * 24 },
@@ -234,7 +234,7 @@ static char *get_uptime() {
 
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 // Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
-static char *get_battery_percentage() {
+static char *get_battery_percentage(char** label) {
   int battery_capacity;
   FILE *capacity_file, *status_file;
   char battery_status[12] = "Unknown";
@@ -288,11 +288,11 @@ static char *get_packages(const char* dirname, const char* pacname, int num_extr
     return packages;
 }
 
-static char *get_packages_pacman() {
+static char *get_packages_pacman(char** label) {
     return get_packages("/var/lib/pacman/local", "pacman", 0);
 }
 
-static char *get_shell() {
+static char *get_shell(char** label) {
     char *shell = malloc(BUF_SIZE);
     char *shell_path = getenv("SHELL");
     char *shell_name = strrchr(getenv("SHELL"), '/');
@@ -305,7 +305,7 @@ static char *get_shell() {
     return shell;
 }
 
-static char *get_resolution() {
+static char *get_resolution(char** label) {
     int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
     
@@ -361,7 +361,7 @@ static char *get_resolution() {
     return resolution;
 }
 
-static char *get_terminal() {
+static char *get_terminal(char** label) {
     unsigned char *prop;
     char *terminal = malloc(BUF_SIZE);
 
@@ -399,7 +399,7 @@ terminal_fallback:
     return terminal;
 }
 
-static char *get_cpu() {
+static char *get_cpu(char** label) {
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
         status = -1;
@@ -533,15 +533,15 @@ static char *find_gpu(int index) {
     return gpu;
 }
 
-static char *get_gpu1() {
+static char *get_gpu1(char** label) {
     return find_gpu(0);
 }
 
-static char *get_gpu2() {
+static char *get_gpu2(char** label) {
     return find_gpu(1);
 }
 
-static char *get_memory() {
+static char *get_memory(char** label) {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
 
@@ -597,15 +597,15 @@ static char *get_disk_usage(const char *folder) {
     return disk_usage;
 }
 
-static char *get_disk_usage_root() {
+static char *get_disk_usage_root(char** label) {
     return get_disk_usage("/");
 }
 
-static char *get_disk_usage_home() {
+static char *get_disk_usage_home(char** label) {
     return get_disk_usage("/home");
 }
 
-static char *get_colors1() {
+static char *get_colors1(char** label) {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
 
@@ -618,7 +618,7 @@ static char *get_colors1() {
     return colors1;
 }
 
-static char *get_colors2() {
+static char *get_colors2(char** label) {
     char *colors2 = malloc(BUF_SIZE);
     char *s = colors2;
 
@@ -631,7 +631,7 @@ static char *get_colors2() {
     return colors2;
 }
 
-static char *spacer() {
+static char *spacer(char** label) {
     return calloc(1, 1); // freeable, null-terminated string of length 1
 }
 
@@ -665,18 +665,18 @@ char *search_cache(char *cache_data, char *label) {
     return buf;
 }
 
-char *get_value(struct conf c, int read_cache, char *cache_data) {
+char *get_value(struct conf *c, int read_cache, char *cache_data) {
     char *value;
 
     // If the user's config specifies that this value should be cached
-    if(c.cached && read_cache) // and we have a cache to read from
-        value = search_cache(cache_data, c.label); // grab it from the cache
+    if(c->cached && read_cache) // and we have a cache to read from
+        value = search_cache(cache_data, c->label); // grab it from the cache
     else {
         // Otherwise, call the associated function to get the value
-        value = c.function();
-        if(c.cached) { // and append it to our cache data if appropriate
+        value = c->function(&c->label);
+        if(c->cached) { // and append it to our cache data if appropriate
             char *buf = malloc(BUF_SIZE);
-            sprintf(buf, "%s=%s;", c.label, value);
+            sprintf(buf, "%s=%s;", c->label, value);
             strcat(cache_data, buf);
             free(buf);
         }
@@ -720,18 +720,17 @@ int main(int argc, char *argv[]) {
             printf(COLOR"%s\n", LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
-            char *label = config[i+offset].label,
-                 *value = get_value(config[i+offset], read_cache, cache_data);
+            struct conf c = config[i + offset];
+            char *value = get_value(&c, read_cache, cache_data);
             if (strcmp(value, "") != 0) { // check if value is an empty string
-                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value); // just print if not empty
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value); // just print if not empty
             } else {
-                if (strcmp(label, "") != 0) { // check if label is empty, otherwise it's a spacer
+                if (strcmp(c.label, "") != 0) { // check if label is empty, otherwise it's a spacer
                     ++offset; // print next line of information
                     free(value); // free memory allocated for empty value
-                    label = config[i+offset].label; // read new label and value
-                    value = get_value(config[i+offset], read_cache, cache_data);
+                    value = get_value(&config[i+offset], read_cache, cache_data);
                 }
-                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value);
             }
             free(value);
 
