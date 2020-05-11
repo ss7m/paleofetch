@@ -234,9 +234,11 @@ static char *get_uptime(char** label) {
 
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 // Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
-static char *get_battery_percentage(char** label) {
+// returns percentage of the nth battery
+// changes the contents of *label to the name of the battery
+static char *get_nth_battery_percentage(int n, char** label) {
   int battery_capacity;
-  FILE *capacity_file, *status_file;
+  FILE *capacity_file, *status_file, *model_file;
   char battery_status[12] = "Unknown";
 
   if ((capacity_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) == NULL) {
@@ -260,7 +262,22 @@ static char *get_battery_percentage(char** label) {
 
   snprintf(battery, 20, "%d%% [%s]", battery_capacity, battery_status);
 
+  // get model name of battery
+  char *model_name = malloc(30);
+
+  if ((model_file = fopen(BATTERY_DIRECTORY "/model_name", "r")) != NULL) {
+    fgets(model_name, 30, model_file);
+    remove_newline(model_name);
+    strcat(model_name, ": ");
+    *label = model_name;
+  }
+
   return battery;
+}
+
+static char *get_battery_percentage(char** label)
+{
+  return get_nth_battery_percentage(0, label);
 }
 
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
