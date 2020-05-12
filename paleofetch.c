@@ -720,8 +720,11 @@ int main(int argc, char *argv[]) {
     }
 
     int offset = 0;
-    #define LOGO ARCH_LOGO
-
+    if (strstr(get_os, "Bedrock") != NULL) {
+        #define LOGO BEDROCK_LOGO
+    } else if (strstr(get_os, "Arch") != NULL) {
+        #define LOGO BEDROCK_LOGO
+    }
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
         if(i >= COUNT(config) - offset) // just print the next line of the logo
