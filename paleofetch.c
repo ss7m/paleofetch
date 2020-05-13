@@ -360,9 +360,14 @@ static char *get_nth_battery_percentage(int n, char** label) {
   return battery;
 }
 
-static char *get_battery_percentage(char** label)
+static char *get_battery_1_percentage(char** label)
 {
   return get_nth_battery_percentage(0, label);
+}
+
+static char *get_battery_2_percentage(char** label)
+{
+  return get_nth_battery_percentage(1, label);
 }
 
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
