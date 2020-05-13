@@ -325,7 +325,7 @@ static char *get_nth_battery_percentage(int n, char** label) {
   bool capacity_is_percent = true;
 
   strcpy(file_path_buffer_end, "capacity");
-  printf("%s\n", file_path_buffer);
+  /* printf("%s\n", file_path_buffer); */
   if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
     strcpy(file_path_buffer_end, "capacity_level");
     if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
@@ -339,7 +339,7 @@ static char *get_nth_battery_percentage(int n, char** label) {
   fclose(capacity_file);
 
   strcpy(file_path_buffer_end, "status");
-  printf("%s\n", file_path_buffer);
+  /* printf("%s\n", file_path_buffer); */
   if ((status_file = fopen(file_path_buffer, "r")) != NULL) {
     fscanf(status_file, "%s", battery_status);
     fclose(status_file);
@@ -365,7 +365,7 @@ static char *get_nth_battery_percentage(int n, char** label) {
   char *model_name = malloc(30);
 
   strcpy(file_path_buffer_end, "model_name");
-  printf("%s\n", file_path_buffer);
+  /* printf("%s\n", file_path_buffer); */
   if ((model_file = fopen(file_path_buffer, "r")) != NULL) {
     fgets(model_name, 30, model_file);
     remove_newline(model_name);
