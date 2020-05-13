@@ -271,24 +271,7 @@ static struct dirent *get_nth_battery(int n)
 
   if (!power_supply_directory) {
     num_dirs = scandir("/sys/class/power_supply/", &power_supply_directory, directory_is_battery, alphasort);
-
-    /* for (int i = 0; i < num_dirs; i++) */
-      /* printf("Directory name_: %s\n", power_supply_directory[i]->d_name); */
-    /* printf("_!!\n"); */
   }
-
-  /* printf("!!!\n"); */
-
-  /* struct dirent *potential_battery; */
-  /* if ((potential_battery = readdir(power_supply_directory)) != NULL) */
-  /* { */
-  /*   if (!directory_is_battery(potential_battery)) */
-  /*   { */
-  /*     free(potential_battery); */
-  /*     return get_next_battery(); */
-  /*   } */
-  /* } */
-
 
   if (n < num_dirs)
     return power_supply_directory[n];
@@ -303,13 +286,9 @@ static struct dirent *get_nth_battery(int n)
 static char *get_nth_battery_percentage(int n, char** label) {
 
   struct dirent *battery_directory = get_nth_battery(n);
-  /* if (battery_directory != NULL) */
-  /*   printf("Active battery: %s\n", battery_directory->d_name); */
+
   if (battery_directory == NULL)
     return calloc(1, 1);
-
-  /* DIR *power_supply_directory; */
-  /* struct dirent *directory; */
 
   // could not figure out possible values for this
   char battery_capacity[12];
@@ -325,7 +304,6 @@ static char *get_nth_battery_percentage(int n, char** label) {
   bool capacity_is_percent = true;
 
   strcpy(file_path_buffer_end, "capacity");
-  /* printf("%s\n", file_path_buffer); */
   if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
     strcpy(file_path_buffer_end, "capacity_level");
     if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
@@ -339,7 +317,6 @@ static char *get_nth_battery_percentage(int n, char** label) {
   fclose(capacity_file);
 
   strcpy(file_path_buffer_end, "status");
-  /* printf("%s\n", file_path_buffer); */
   if ((status_file = fopen(file_path_buffer, "r")) != NULL) {
     fscanf(status_file, "%s", battery_status);
     fclose(status_file);
