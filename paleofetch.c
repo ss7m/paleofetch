@@ -232,6 +232,70 @@ static char *get_uptime(char** label) {
     return uptime;
 }
 
+static int directory_is_battery(const struct dirent *potential_battery) {
+  // filters out . and ..
+  if (potential_battery->d_name[0] == '.')
+  {
+    return 0;
+  }
+  else
+  {
+    // d_name can be up to 255 characters long
+    // 285 bytes are necessary to hold all possible strings
+    // in reality, the name of the battery folder probably wont be that long,
+    // but it's better to be safe
+    static char directory_buffer[BUF_SIZE * 2];
+    snprintf(directory_buffer, sizeof(directory_buffer), "/sys/class/power_supply/%s/type", potential_battery->d_name);
+
+    FILE* battery_type_file;
+
+    if ((battery_type_file = fopen(directory_buffer, "r")) != NULL)
+    {
+      // longest possible string is "Battery", which is 7 characters long
+      // add 1 to buffer size for null terminating character
+      char battery_type[8];
+      fscanf(battery_type_file, "%s", battery_type);
+      return strcmp(battery_type, "Battery") == 0;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+}
+
+static struct dirent *get_nth_battery(int n)
+{
+  static struct dirent **power_supply_directory = NULL;
+  static int num_dirs = -1;
+
+  if (!power_supply_directory) {
+    num_dirs = scandir("/sys/class/power_supply/", &power_supply_directory, directory_is_battery, alphasort);
+
+    /* for (int i = 0; i < num_dirs; i++) */
+      /* printf("Directory name_: %s\n", power_supply_directory[i]->d_name); */
+    /* printf("_!!\n"); */
+  }
+
+  /* printf("!!!\n"); */
+
+  /* struct dirent *potential_battery; */
+  /* if ((potential_battery = readdir(power_supply_directory)) != NULL) */
+  /* { */
+  /*   if (!directory_is_battery(potential_battery)) */
+  /*   { */
+  /*     free(potential_battery); */
+  /*     return get_next_battery(); */
+  /*   } */
+  /* } */
+
+
+  if (n < num_dirs)
+    return power_supply_directory[n];
+  else
+    return NULL;
+}
+
 // returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
 // Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
 // returns percentage of the nth battery
