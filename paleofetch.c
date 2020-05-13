@@ -815,12 +815,14 @@ int main(int argc, char *argv[]) {
             if (strcmp(value, "") != 0) { // check if value is an empty string
                 printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value); // just print if not empty
             } else {
-                if (strcmp(c.label, "") != 0) { // check if label is empty, otherwise it's a spacer
-                    ++offset; // print next line of information
+                if (strcmp(c.label, "SPACER") != 0) { // check if label is SPACER, otherwise not a spacer
+                    ++offset; // print next line of informati
                     free(value); // free memory allocated for empty value
-                    value = get_value(&config[i+offset], read_cache, cache_data);
+                    i--;
+                    continue;
                 }
-                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value);
+
+                printf(COLOR"%s\e[0m\n", LOGO[i]);
             }
             free(value);
 
