@@ -234,12 +234,10 @@ static char *get_uptime(char** label) {
 
 static int directory_is_battery(const struct dirent *potential_battery) {
   // filters out . and ..
-  if (potential_battery->d_name[0] == '.')
-  {
+  if (potential_battery->d_name[0] == '.') {
     return 0;
   }
-  else
-  {
+  else {
     // d_name can be up to 255 characters long
     // 285 bytes are necessary to hold all possible strings
     // in reality, the name of the battery folder probably wont be that long,
@@ -249,23 +247,20 @@ static int directory_is_battery(const struct dirent *potential_battery) {
 
     FILE* battery_type_file;
 
-    if ((battery_type_file = fopen(directory_buffer, "r")) != NULL)
-    {
+    if ((battery_type_file = fopen(directory_buffer, "r")) != NULL) {
       // longest possible string is "Battery", which is 7 characters long
       // add 1 to buffer size for null terminating character
       char battery_type[8];
       fscanf(battery_type_file, "%s", battery_type);
       return strcmp(battery_type, "Battery") == 0;
     }
-    else
-    {
+    else {
       return 0;
     }
   }
 }
 
-static struct dirent *get_nth_battery(int n)
-{
+static struct dirent *get_nth_battery(int n) {
   static struct dirent **power_supply_directory = NULL;
   static int num_dirs = -1;
 
@@ -284,7 +279,6 @@ static struct dirent *get_nth_battery(int n)
 // returns percentage of the nth battery
 // changes the contents of *label to the name of the battery
 static char *get_nth_battery_percentage(int n, char** label) {
-
   struct dirent *battery_directory = get_nth_battery(n);
 
   if (battery_directory == NULL)
@@ -329,12 +323,10 @@ static char *get_nth_battery_percentage(int n, char** label) {
   // 1234567890123456789
   char *battery = malloc(20);
 
-  if (capacity_is_percent)
-  {
+  if (capacity_is_percent) {
     snprintf(battery, 20, "%s%% [%s]", battery_capacity, battery_status);
   }
-  else
-  {
+  else {
     snprintf(battery, 20, "%s [%s]", battery_capacity, battery_status);
   }
 
@@ -353,13 +345,11 @@ static char *get_nth_battery_percentage(int n, char** label) {
   return battery;
 }
 
-static char *get_battery_1_percentage(char** label)
-{
+static char *get_battery_1_percentage(char** label) {
   return get_nth_battery_percentage(0, label);
 }
 
-static char *get_battery_2_percentage(char** label)
-{
+static char *get_battery_2_percentage(char** label) {
   return get_nth_battery_percentage(1, label);
 }
 
