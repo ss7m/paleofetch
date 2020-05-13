@@ -23,6 +23,6 @@ static char *get_title(char** label),
             *get_colors2(char** label),
             *spacer(char** label);
 
-#define SPACER {"", spacer, false},
+#define SPACER {"SPACER", spacer, false},
 #define REMOVE(A) { (A), NULL, sizeof(A) - 1 , 0 }
 #define REPLACE(A, B) { (A), (B), sizeof(A) - 1, sizeof(B) - 1 }
