@@ -311,7 +311,9 @@ static char *get_nth_battery_percentage(int n, char** label) {
   /* DIR *power_supply_directory; */
   /* struct dirent *directory; */
 
-  int battery_capacity;
+  // could not figure out possible values for this
+  char battery_capacity[12];
+
   FILE *capacity_file, *status_file, *model_file;
   char battery_status[12] = "Unknown";
   
@@ -320,14 +322,20 @@ static char *get_nth_battery_percentage(int n, char** label) {
   
   char *file_path_buffer_end = file_path_buffer + strlen(file_path_buffer);
 
+  bool capacity_is_percent = true;
+
   strcpy(file_path_buffer_end, "capacity");
   printf("%s\n", file_path_buffer);
   if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
-    status = ENOENT;
-    halt_and_catch_fire("Unable to get battery information");
+    strcpy(file_path_buffer_end, "capacity_level");
+    if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
+      status = ENOENT;
+      halt_and_catch_fire("Unable to get battery information");
+    }
+    capacity_is_percent = false;
   }
 
-  fscanf(capacity_file, "%d", &battery_capacity);
+  fscanf(capacity_file, "%s", battery_capacity);
   fclose(capacity_file);
 
   strcpy(file_path_buffer_end, "status");
@@ -340,10 +348,18 @@ static char *get_nth_battery_percentage(int n, char** label) {
   // max length of resulting string is 19
   // one byte for padding incase there is a newline
   // 100% [Discharging]
+  // High [Discharging]
   // 1234567890123456789
   char *battery = malloc(20);
 
-  snprintf(battery, 20, "%d%% [%s]", battery_capacity, battery_status);
+  if (capacity_is_percent)
+  {
+    snprintf(battery, 20, "%s%% [%s]", battery_capacity, battery_status);
+  }
+  else
+  {
+    snprintf(battery, 20, "%s [%s]", battery_capacity, battery_status);
+  }
 
   // get model name of battery
   char *model_name = malloc(30);
