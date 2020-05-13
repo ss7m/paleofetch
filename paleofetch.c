@@ -301,11 +301,28 @@ static struct dirent *get_nth_battery(int n)
 // returns percentage of the nth battery
 // changes the contents of *label to the name of the battery
 static char *get_nth_battery_percentage(int n, char** label) {
+
+  struct dirent *battery_directory = get_nth_battery(n);
+  /* if (battery_directory != NULL) */
+  /*   printf("Active battery: %s\n", battery_directory->d_name); */
+  if (battery_directory == NULL)
+    return calloc(1, 1);
+
+  /* DIR *power_supply_directory; */
+  /* struct dirent *directory; */
+
   int battery_capacity;
   FILE *capacity_file, *status_file, *model_file;
   char battery_status[12] = "Unknown";
+  
+  char file_path_buffer[BUF_SIZE];
+  snprintf(file_path_buffer, sizeof(file_path_buffer), "/sys/class/power_supply/%s/", battery_directory->d_name);
+  
+  char *file_path_buffer_end = file_path_buffer + strlen(file_path_buffer);
 
-  if ((capacity_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) == NULL) {
+  strcpy(file_path_buffer_end, "capacity");
+  printf("%s\n", file_path_buffer);
+  if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
     status = ENOENT;
     halt_and_catch_fire("Unable to get battery information");
   }
@@ -313,7 +330,9 @@ static char *get_nth_battery_percentage(int n, char** label) {
   fscanf(capacity_file, "%d", &battery_capacity);
   fclose(capacity_file);
 
-  if ((status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
+  strcpy(file_path_buffer_end, "status");
+  printf("%s\n", file_path_buffer);
+  if ((status_file = fopen(file_path_buffer, "r")) != NULL) {
     fscanf(status_file, "%s", battery_status);
     fclose(status_file);
   }
@@ -329,7 +348,9 @@ static char *get_nth_battery_percentage(int n, char** label) {
   // get model name of battery
   char *model_name = malloc(30);
 
-  if ((model_file = fopen(BATTERY_DIRECTORY "/model_name", "r")) != NULL) {
+  strcpy(file_path_buffer_end, "model_name");
+  printf("%s\n", file_path_buffer);
+  if ((model_file = fopen(file_path_buffer, "r")) != NULL) {
     fgets(model_name, 30, model_file);
     remove_newline(model_name);
     strcat(model_name, ": ");
