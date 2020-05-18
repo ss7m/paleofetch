@@ -311,7 +311,7 @@ static char *per_pac(const char* paccommand_in, const char* pkgman_name, const c
     FILE* test = popen(test_cmd, "r");
 
     while (fgets(test_out, sizeof(test_out), test) != NULL) {
-        if (strstr(test_out, "/") != NULL) {
+        if (strstr(test_out, "which: no") == NULL) {
             fail = 0;
         }
     }
