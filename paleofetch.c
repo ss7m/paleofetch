@@ -294,7 +294,7 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
     }
 
 
-    strcpy(test_cmd, "whereis ");
+    strcpy(test_cmd, "which ");
     strcat(test_cmd, binary);
     strcat(test_cmd, """ 2>/dev/null""");
 
@@ -306,6 +306,7 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
         }
     }
     pclose(test);
+    free(test_cmd);
     
     if (fail == 0) {
         // int num_packages = 0;
