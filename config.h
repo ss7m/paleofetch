@@ -14,7 +14,7 @@
     { "Uptime: ",     get_uptime,              false }, \
     { "Battery: ",    get_battery_percentage,  false }, \
     SPACER \
-    { "Packages: ",   get_packages,   false }, \
+    { "Packages: ",   get_packages,   true }, \
     { "Shell: ",      get_shell,             false }, \
     { "Resolution: ", get_resolution,        false }, \
     { "Terminal: ",   get_terminal,          false }, \
