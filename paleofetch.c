@@ -314,7 +314,6 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
     free(test_cmd);
     
     if (fail == 0) {
-        // int num_packages = 0;
         char out[1035];
         FILE* fp = popen(paccommand, "r");
 
