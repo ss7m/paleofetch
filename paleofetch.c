@@ -271,6 +271,16 @@ static char *get_battery_percentage() {
   return battery;
 }
 
+void removeSubstr (char *string, char *sub) {
+    char *match = string;
+    int len = strlen(sub);
+    while ((match = strstr(match, sub))) {
+        *match = '\0';
+        strcat(string, match+len);
+                match++;
+    }
+}
+
 static char *per_pac(const char* paccommand, const char* pkgman_name, const char* prev_msg) {
     char test_out[1035];
     char *test_cmd = malloc(BUF_SIZE);
@@ -284,13 +294,16 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
     }
 
 
-    strcpy(test_cmd, "compgen -c ");
+    // strcpy(test_cmd, "compgen -c ");
+    strcpy(test_cmd, """bash -c '""");
+    strcat(test_cmd, "whereis ");
     strcat(test_cmd, binary);
+    strcat(test_cmd, """ 2>/dev/null'""");
 
     FILE* test = popen(test_cmd, "r");
 
     while (fgets(test_out, sizeof(test_out), test) != NULL) {
-        if (strstr(test_out, binary) != NULL) {
+        if (strstr(test_out, "/") != NULL) {
             fail = 0;
         }
     }
@@ -308,9 +321,12 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
         pclose(fp);
         
         char *output_msg = malloc(BUF_SIZE);
-        snprintf(output_msg, BUF_SIZE, "%s (%s)", num_packages, pkgman_name);
-
-        return output_msg;  
+        if (prev_msg != "no package managers here") {
+            snprintf(output_msg, BUF_SIZE, "%s %s (%s)", prev_msg, num_packages, pkgman_name);
+        } else {
+            snprintf(output_msg, BUF_SIZE, "%s (%s)", num_packages, pkgman_name);
+        }
+        return output_msg;
     } else if (fail == 1) {
         return prev_msg;
     }
@@ -318,9 +334,12 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
 
 
 static char *get_packages() {
-    char *msg = calloc("", BUF_SIZE);
+    char *msg = calloc("no package managers here", BUF_SIZE);
+    msg = per_pac("kiss -l | wc -l", "kiss", msg);
     msg = per_pac("pacman -Qq | wc -l", "pacman", msg);
     msg = per_pac("dpkg-query -f '.\n' -W | wc -l", "dpkg", msg);
+    msg = per_pac("rpm -qa | wc -l", "rpm", msg);
+    removeSubstr(msg, "(null) ");
     return msg;
 }
 
