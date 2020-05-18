@@ -281,16 +281,26 @@ void removeSubstr (char *string, char *sub) {
     }
 }
 
-static char *per_pac(const char* paccommand, const char* pkgman_name, const char* prev_msg) {
+static char *per_pac(const char* paccommand_in, const char* pkgman_name, const char* prev_msg) {
     char test_out[1035];
     char *test_cmd = malloc(BUF_SIZE);
     int fail = 1;
     char *binary;
+    char *paccommand = malloc(BUF_SIZE);
 
-    if (pkgman_name == "pacman") {
-        binary = "pacman";
-    } else if (pkgman_name == "dpkg") {
+    strcpy(paccommand, paccommand_in);
+    strcat(paccommand, " | wc -l");
+
+
+
+    if (pkgman_name == "dpkg") {
         binary = "dpkg-query";
+    } else if (pkgman_name == "xbps") {
+        binary = "xbps-query";
+    } else if (pkgman_name == "sorcery") {
+        binary = "gaze";
+    } else {
+        binary = pkgman_name;
     }
 
 
@@ -333,13 +343,25 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
 
 
 static char *get_packages() {
-    char *msg = calloc("no package managers here", BUF_SIZE);
-    msg = per_pac("kiss -l | wc -l", "kiss", msg);
-    msg = per_pac("pacman -Qq | wc -l", "pacman", msg);
-    msg = per_pac("dpkg-query -f '.\n' -W | wc -l", "dpkg", msg);
-    msg = per_pac("rpm -qa | wc -l", "rpm", msg);
-    removeSubstr(msg, "(null) ");
-    return msg;
+    char *pac_msg = calloc("no package managers here", BUF_SIZE);
+    pac_msg = per_pac("kiss -l", "kiss", pac_msg);
+    pac_msg = per_pac("pacman -Qq --color never", "pacman", pac_msg);
+    pac_msg = per_pac("dpkg-query -f '.\n' -W", "dpkg", pac_msg);
+    pac_msg = per_pac("rpm -qa", "rpm", pac_msg);
+    pac_msg = per_pac("xbps-query -l", "xbps", pac_msg);
+    pac_msg = per_pac("apk info", "apk", pac_msg);
+    pac_msg = per_pac("opkg list-installed", "opkg", pac_msg);
+    pac_msg = per_pac("pacman-g2 -Q", "pacman-g2", pac_msg);
+    pac_msg = per_pac("lvu installed", "lvu", pac_msg);
+    pac_msg = per_pac("tce-status -i", "tce-status", pac_msg);
+    pac_msg = per_pac("pkg_info", "pkg_info", pac_msg);
+    pac_msg = per_pac("tazpkg list", "tazpkg", pac_msg);
+    pac_msg = per_pac("gaze installed", "sorcery", pac_msg);
+    pac_msg = per_pac("alps showinstalled", "alps", pac_msg);
+    pac_msg = per_pac("butch list", "butch", pac_msg);
+    pac_msg = per_pac("mine -q", "mine", pac_msg);
+    removeSubstr(pac_msg, "(null) ");
+    return pac_msg;
 }
 
 static char *get_shell() {
