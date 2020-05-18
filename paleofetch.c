@@ -294,11 +294,9 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
     }
 
 
-    // strcpy(test_cmd, "compgen -c ");
-    strcpy(test_cmd, """bash -c '""");
-    strcat(test_cmd, "whereis ");
+    strcpy(test_cmd, "whereis ");
     strcat(test_cmd, binary);
-    strcat(test_cmd, """ 2>/dev/null'""");
+    strcat(test_cmd, """ 2>/dev/null""");
 
     FILE* test = popen(test_cmd, "r");
 
