@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <sys/utsname.h>
@@ -15,7 +16,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-
+#include <spawn.h>
 #include "paleofetch.h"
 #include "config.h"
 
@@ -270,33 +271,57 @@ static char *get_battery_percentage() {
   return battery;
 }
 
-static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
-    int num_packages = 0;
-    DIR * dirp;
-    struct dirent *entry;
+static char *per_pac(const char* paccommand, const char* pkgman_name, const char* prev_msg) {
+    char test_out[1035];
+    char *test_cmd = malloc(BUF_SIZE);
+    int fail = 1;
+    char *binary;
 
-    dirp = opendir(dirname);
-
-    if(dirp == NULL) {
-        status = -1;
-        halt_and_catch_fire("You may not have %s installed", dirname);
+    if (pkgman_name == "pacman") {
+        binary = "pacman";
+    } else if (pkgman_name == "dpkg") {
+        binary = "dpkg-query";
     }
 
-    while((entry = readdir(dirp)) != NULL) {
-        if(entry->d_type == DT_DIR) num_packages++;
+
+    strcpy(test_cmd, "compgen -c ");
+    strcat(test_cmd, binary);
+
+    FILE* test = popen(test_cmd, "r");
+
+    while (fgets(test_out, sizeof(test_out), test) != NULL) {
+        if (strstr(test_out, binary) != NULL) {
+            fail = 0;
+        }
     }
-    num_packages -= (2 + num_extraneous); // accounting for . and ..
+    pclose(test);
+    
+    if (fail == 0) {
+        // int num_packages = 0;
+        char out[1035];
+        FILE* fp = popen(paccommand, "r");
 
-    status = closedir(dirp);
+        // i = 0;
+        while (fgets(out, sizeof(out), fp) != NULL) {
+            #define num_packages strtok(out, "\n")
+        }
+        pclose(fp);
+        
+        char *output_msg = malloc(BUF_SIZE);
+        snprintf(output_msg, BUF_SIZE, "%s (%s)", num_packages, pkgman_name);
 
-    char *packages = malloc(BUF_SIZE);
-    snprintf(packages, BUF_SIZE, "%d (%s)", num_packages, pacname);
-
-    return packages;
+        return output_msg;  
+    } else if (fail == 1) {
+        return prev_msg;
+    }
 }
 
-static char *get_packages_pacman() {
-    return get_packages("/var/lib/pacman/local", "pacman", 0);
+
+static char *get_packages() {
+    char *msg = calloc("", BUF_SIZE);
+    msg = per_pac("pacman -Qq | wc -l", "pacman", msg);
+    msg = per_pac("dpkg-query -f '.\n' -W | wc -l", "dpkg", msg);
+    return msg;
 }
 
 static char *get_shell() {
@@ -308,7 +333,6 @@ static char *get_shell() {
         strncpy(shell, shell_path, BUF_SIZE); /* copy the whole thing over */
     else
         strncpy(shell, shell_name + 1, BUF_SIZE); /* o/w copy past the last '/' */
-
     return shell;
 }
 
@@ -697,6 +721,13 @@ int main(int argc, char *argv[]) {
     FILE *cache_file;
     int read_cache;
 
+    #define os get_os()
+
+    if (strstr(os, "Arch Linux") != NULL) {
+        #define COLOR "\e[1;36m"
+    } else if (strstr(os, "Bedrock Linux") != NULL) {
+        #define COLOR "\e[0;90m"
+    }
     status = uname(&uname_info);
     halt_and_catch_fire("uname failed");
     status = sysinfo(&my_sysinfo);
