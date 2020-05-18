@@ -281,16 +281,11 @@ void removeSubstr (char *string, char *sub) {
     }
 }
 
-static char *per_pac(const char* paccommand_in, const char* pkgman_name, const char* prev_msg) {
+static char *per_pac(const char* paccommand, const char* pkgman_name, const char* prev_msg) {
     char test_out[1035];
     char *test_cmd = malloc(BUF_SIZE);
     int fail = 1;
     char *binary;
-    char *paccommand = malloc(BUF_SIZE);
-
-    strcpy(paccommand, paccommand_in);
-    strcat(paccommand, " | wc -l");
-
 
 
     if (pkgman_name == "dpkg") {
@@ -323,17 +318,17 @@ static char *per_pac(const char* paccommand_in, const char* pkgman_name, const c
         char out[1035];
         FILE* fp = popen(paccommand, "r");
 
-        // i = 0;
+        int num_packages = 0;
         while (fgets(out, sizeof(out), fp) != NULL) {
-            #define num_packages strtok(out, "\n")
+            num_packages = num_packages + 1;
         }
         pclose(fp);
         
         char *output_msg = malloc(BUF_SIZE);
         if (prev_msg != "no package managers here") {
-            snprintf(output_msg, BUF_SIZE, "%s %s (%s)", prev_msg, num_packages, pkgman_name);
+            snprintf(output_msg, BUF_SIZE, "%s %d (%s)", prev_msg, num_packages, pkgman_name);
         } else {
-            snprintf(output_msg, BUF_SIZE, "%s (%s)", num_packages, pkgman_name);
+            snprintf(output_msg, BUF_SIZE, "%d (%s)", num_packages, pkgman_name);
         }
         return output_msg;
     } else if (fail == 1) {
