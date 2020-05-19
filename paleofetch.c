@@ -761,6 +761,8 @@ int main(int argc, char *argv[]) {
         #define COLOR "\e[1;36m"
     } else if (strstr(os, "Bedrock Linux") != NULL) {
         #define COLOR "\e[0;90m"
+    } else {
+        #define COLOR "\e[1;36m"
     }
     status = uname(&uname_info);
     halt_and_catch_fire("uname failed");
