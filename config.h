@@ -1,6 +1,5 @@
-#include "logos/arch.h"
-#include "logos/bedrock.h"
-#include <string.h>
+// #include "logos/arch.h"
+// #include "logos/bedrock.h"
 #define COLOR
 
 #define CONFIG \

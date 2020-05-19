@@ -19,6 +19,7 @@
 #include <spawn.h>
 #include "paleofetch.h"
 #include "config.h"
+#include "logos.h"
 
 #define BUF_SIZE 150
 #define COUNT(x) (int)(sizeof x / sizeof *x)
@@ -306,7 +307,7 @@ static char *per_pac(const char* paccommand, const char* pkgman_name, const char
     FILE* test = popen(test_cmd, "r");
 
     while (fgets(test_out, sizeof(test_out), test) != NULL) {
-        if (strstr(test_out, "which: no") == NULL) {
+        if (strstr(test_out, "which: no ") == NULL) {
             fail = 0;
         }
     }
@@ -786,11 +787,8 @@ int main(int argc, char *argv[]) {
     }
 
     int offset = 0;
-    if (strstr(get_os, "Bedrock") != NULL) {
-        #define LOGO BEDROCK_LOGO
-    } else if (strstr(get_os, "Arch") != NULL) {
-        #define LOGO BEDROCK_LOGO
-    }
+    char *LOGO = logo_picker("Bedrock Linux");
+
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
         if(i >= COUNT(config) - offset) // just print the next line of the logo
