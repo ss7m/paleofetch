@@ -69,6 +69,7 @@ which function paleofetch will call display. Current available getter functions 
 * `get_host`: Prints the model of computer
 * `get_kernel`: Prints the version of the linux kernel
 * `get_uptime`: Shows how long linux has been running
+* `get_battery_1_percentage`, `get_battery_2_percentage`: Prints out the percentage of the nth battery and whether or not it is charging. The label is treated as a format string internally. If you want to use the model name of the battery inside of the label, use `%s` in its place. If you do not want to use the model name, you do not have to put `%s` in the label.
 * `get_packages`: Shows how many packages you have installed. Currently only works for pacman.
 * `get_shell`: Shows which shell you are using
 * `get_resolution`: Prints your screen resolution

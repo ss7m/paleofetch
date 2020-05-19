@@ -122,7 +122,7 @@ void replace_substring(char *str, const char *sub_str, const char *repl_str, siz
     strcpy(start + repl_len, buffer);
 }
 
-static char *get_title() {
+static char *get_title(char** label) {
     // reduce the maximum size for these, so that we don't over-fill the title string
     char hostname[BUF_SIZE / 3];
     status = gethostname(hostname, BUF_SIZE / 3);
@@ -140,7 +140,7 @@ static char *get_title() {
     return title;
 }
 
-static char *get_bar() {
+static char *get_bar(char** label) {
     char *bar = malloc(BUF_SIZE);
     char *s = bar;
     for(int i = 0; i < title_length; i++) *(s++) = '-';
@@ -148,7 +148,7 @@ static char *get_bar() {
     return bar;
 }
 
-static char *get_os() {
+static char *get_os(char** label) {
     char *os = malloc(BUF_SIZE),
          *name = malloc(BUF_SIZE),
          *line = NULL;
@@ -171,13 +171,13 @@ static char *get_os() {
     return os;
 }
 
-static char *get_kernel() {
+static char *get_kernel(char** label) {
     char *kernel = malloc(BUF_SIZE);
     strncpy(kernel, uname_info.release, BUF_SIZE);
     return kernel;
 }
 
-static char *get_host() {
+static char *get_host(char** label) {
     char *host = malloc(BUF_SIZE), buffer[BUF_SIZE/2];
     FILE *product_name, *product_version, *model;
 
@@ -210,7 +210,7 @@ model_fallback:
     return NULL;
 }
 
-static char *get_uptime() {
+static char *get_uptime(char** label) {
     long seconds = my_sysinfo.uptime;
     struct { char *name; int secs; } units[] = {
         { "day",  60 * 60 * 24 },
@@ -232,22 +232,86 @@ static char *get_uptime() {
     return uptime;
 }
 
-// returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
-// Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
-static char *get_battery_percentage() {
-  int battery_capacity;
-  FILE *capacity_file, *status_file;
-  char battery_status[12] = "Unknown";
+static int directory_is_battery(const struct dirent *potential_battery) {
+  // filters out . and ..
+  if (potential_battery->d_name[0] == '.') {
+    return 0;
+  }
+  else {
+    // d_name can be up to 255 characters long
+    // 285 bytes are necessary to hold all possible strings
+    // in reality, the name of the battery folder probably wont be that long,
+    // but it's better to be safe
+    static char directory_buffer[BUF_SIZE * 2];
+    snprintf(directory_buffer, sizeof(directory_buffer), "/sys/class/power_supply/%s/type", potential_battery->d_name);
 
-  if ((capacity_file = fopen(BATTERY_DIRECTORY "/capacity", "r")) == NULL) {
-    status = ENOENT;
-    halt_and_catch_fire("Unable to get battery information");
+    FILE* battery_type_file;
+
+    if ((battery_type_file = fopen(directory_buffer, "r")) != NULL) {
+      // longest possible string is "Battery", which is 7 characters long
+      // add 1 to buffer size for null terminating character
+      char battery_type[8];
+      fscanf(battery_type_file, "%s", battery_type);
+      return strcmp(battery_type, "Battery") == 0;
+    }
+    else {
+      return 0;
+    }
+  }
+}
+
+static struct dirent *get_nth_battery(int n) {
+  static struct dirent **power_supply_directory = NULL;
+  static int num_dirs = -1;
+
+  if (!power_supply_directory) {
+    num_dirs = scandir("/sys/class/power_supply/", &power_supply_directory, directory_is_battery, alphasort);
   }
 
-  fscanf(capacity_file, "%d", &battery_capacity);
+  if (n < num_dirs)
+    return power_supply_directory[n];
+  else
+    return NULL;
+}
+
+// returns "<Battery Percentage>% [<Charging | Discharging | Unknown>]"
+// Credit: allisio - https://gist.github.com/allisio/1e850b93c81150124c2634716fbc4815
+// returns percentage of the nth battery
+// changes the contents of *label to the name of the battery
+static char *get_nth_battery_percentage(int n, char** label) {
+  struct dirent *battery_directory = get_nth_battery(n);
+
+  if (battery_directory == NULL)
+    return calloc(1, 1);
+
+  // could not figure out possible values for this
+  char battery_capacity[12];
+
+  FILE *capacity_file, *status_file, *model_file;
+  char battery_status[12] = "Unknown";
+  
+  char file_path_buffer[BUF_SIZE];
+  snprintf(file_path_buffer, sizeof(file_path_buffer), "/sys/class/power_supply/%s/", battery_directory->d_name);
+  
+  char *file_path_buffer_end = file_path_buffer + strlen(file_path_buffer);
+
+  bool capacity_is_percent = true;
+
+  strcpy(file_path_buffer_end, "capacity");
+  if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
+    strcpy(file_path_buffer_end, "capacity_level");
+    if ((capacity_file = fopen(file_path_buffer, "r")) == NULL) {
+      status = ENOENT;
+      halt_and_catch_fire("Unable to get battery information");
+    }
+    capacity_is_percent = false;
+  }
+
+  fscanf(capacity_file, "%s", battery_capacity);
   fclose(capacity_file);
 
-  if ((status_file = fopen(BATTERY_DIRECTORY "/status", "r")) != NULL) {
+  strcpy(file_path_buffer_end, "status");
+  if ((status_file = fopen(file_path_buffer, "r")) != NULL) {
     fscanf(status_file, "%s", battery_status);
     fclose(status_file);
   }
@@ -255,12 +319,47 @@ static char *get_battery_percentage() {
   // max length of resulting string is 19
   // one byte for padding incase there is a newline
   // 100% [Discharging]
+  // High [Discharging]
   // 1234567890123456789
   char *battery = malloc(20);
 
-  snprintf(battery, 20, "%d%% [%s]", battery_capacity, battery_status);
+  if (capacity_is_percent) {
+    snprintf(battery, 20, "%s%% [%s]", battery_capacity, battery_status);
+  }
+  else {
+    snprintf(battery, 20, "%s [%s]", battery_capacity, battery_status);
+  }
+
+  // model name is needed if there is a "%s" in the format string
+  bool use_model_name = strstr(*label, "%s") != NULL;
+  if (use_model_name) {
+    // get model name of battery
+    char model_name[30];
+    int final_label_buffer_size = sizeof(model_name) + strlen(*label);
+    char *final_label_buffer = malloc(final_label_buffer_size);
+
+    strcpy(file_path_buffer_end, "model_name");
+    /* printf("%s\n", file_path_buffer); */
+    if ((model_file = fopen(file_path_buffer, "r")) != NULL) {
+      fgets(model_name, sizeof(model_name), model_file);
+      remove_newline(model_name);
+      /* strcat(model_name, ": "); */
+    }
+
+    snprintf(final_label_buffer, final_label_buffer_size, *label, model_name);
+
+    *label = final_label_buffer;
+  }
 
   return battery;
+}
+
+static char *get_battery_1_percentage(char** label) {
+  return get_nth_battery_percentage(0, label);
+}
+
+static char *get_battery_2_percentage(char** label) {
+  return get_nth_battery_percentage(1, label);
 }
 
 static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
@@ -288,11 +387,11 @@ static char *get_packages(const char* dirname, const char* pacname, int num_extr
     return packages;
 }
 
-static char *get_packages_pacman() {
+static char *get_packages_pacman(char** label) {
     return get_packages("/var/lib/pacman/local", "pacman", 0);
 }
 
-static char *get_shell() {
+static char *get_shell(char** label) {
     char *shell = malloc(BUF_SIZE);
     char *shell_path = getenv("SHELL");
     char *shell_name = strrchr(getenv("SHELL"), '/');
@@ -305,7 +404,7 @@ static char *get_shell() {
     return shell;
 }
 
-static char *get_resolution() {
+static char *get_resolution(char** label) {
     int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
     
@@ -361,7 +460,7 @@ static char *get_resolution() {
     return resolution;
 }
 
-static char *get_terminal() {
+static char *get_terminal(char** label) {
     unsigned char *prop;
     char *terminal = malloc(BUF_SIZE);
 
@@ -399,7 +498,7 @@ terminal_fallback:
     return terminal;
 }
 
-static char *get_cpu() {
+static char *get_cpu(char** label) {
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r"); /* read from cpu info */
     if(cpuinfo == NULL) {
         status = -1;
@@ -533,15 +632,15 @@ static char *find_gpu(int index) {
     return gpu;
 }
 
-static char *get_gpu1() {
+static char *get_gpu1(char** label) {
     return find_gpu(0);
 }
 
-static char *get_gpu2() {
+static char *get_gpu2(char** label) {
     return find_gpu(1);
 }
 
-static char *get_memory() {
+static char *get_memory(char** label) {
     int total_memory, used_memory;
     int total, shared, memfree, buffers, cached, reclaimable;
 
@@ -597,15 +696,15 @@ static char *get_disk_usage(const char *folder) {
     return disk_usage;
 }
 
-static char *get_disk_usage_root() {
+static char *get_disk_usage_root(char** label) {
     return get_disk_usage("/");
 }
 
-static char *get_disk_usage_home() {
+static char *get_disk_usage_home(char** label) {
     return get_disk_usage("/home");
 }
 
-static char *get_colors1() {
+static char *get_colors1(char** label) {
     char *colors1 = malloc(BUF_SIZE);
     char *s = colors1;
 
@@ -618,7 +717,7 @@ static char *get_colors1() {
     return colors1;
 }
 
-static char *get_colors2() {
+static char *get_colors2(char** label) {
     char *colors2 = malloc(BUF_SIZE);
     char *s = colors2;
 
@@ -631,7 +730,7 @@ static char *get_colors2() {
     return colors2;
 }
 
-static char *spacer() {
+static char *spacer(char** label) {
     return calloc(1, 1); // freeable, null-terminated string of length 1
 }
 
@@ -665,18 +764,18 @@ char *search_cache(char *cache_data, char *label) {
     return buf;
 }
 
-char *get_value(struct conf c, int read_cache, char *cache_data) {
+char *get_value(struct conf *c, int read_cache, char *cache_data) {
     char *value;
 
     // If the user's config specifies that this value should be cached
-    if(c.cached && read_cache) // and we have a cache to read from
-        value = search_cache(cache_data, c.label); // grab it from the cache
+    if(c->cached && read_cache) // and we have a cache to read from
+        value = search_cache(cache_data, c->label); // grab it from the cache
     else {
         // Otherwise, call the associated function to get the value
-        value = c.function();
-        if(c.cached) { // and append it to our cache data if appropriate
+        value = c->function(&c->label);
+        if(c->cached) { // and append it to our cache data if appropriate
             char *buf = malloc(BUF_SIZE);
-            sprintf(buf, "%s=%s;", c.label, value);
+            sprintf(buf, "%s=%s;", c->label, value);
             strcat(cache_data, buf);
             free(buf);
         }
@@ -720,18 +819,19 @@ int main(int argc, char *argv[]) {
             printf(COLOR"%s\n", LOGO[i]);
         else {
             // Otherwise, we've got a bit of work to do.
-            char *label = config[i+offset].label,
-                 *value = get_value(config[i+offset], read_cache, cache_data);
+            struct conf c = config[i + offset];
+            char *value = get_value(&c, read_cache, cache_data);
             if (strcmp(value, "") != 0) { // check if value is an empty string
-                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value); // just print if not empty
+                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value); // just print if not empty
             } else {
-                if (strcmp(label, "") != 0) { // check if label is empty, otherwise it's a spacer
+                if (strcmp(c.label, "SPACER") != 0) { // check if label is SPACER, otherwise not a spacer
                     ++offset; // print next line of information
                     free(value); // free memory allocated for empty value
-                    label = config[i+offset].label; // read new label and value
-                    value = get_value(config[i+offset], read_cache, cache_data);
+                    i--;
+                    continue;
                 }
-                printf(COLOR"%s%s\e[0m%s\n", LOGO[i], label, value);
+
+                printf(COLOR"%s\e[0m\n", LOGO[i]);
             }
             free(value);
 
