@@ -330,16 +330,25 @@ static char *get_nth_battery_percentage(int n, char** label) {
     snprintf(battery, 20, "%s [%s]", battery_capacity, battery_status);
   }
 
-  // get model name of battery
-  char *model_name = malloc(30);
+  // model name is needed if there is a "%s" in the format string
+  bool use_model_name = strstr(*label, "%s") != NULL;
+  if (use_model_name) {
+    // get model name of battery
+    char model_name[30];
+    int final_label_buffer_size = sizeof(model_name) + strlen(*label);
+    char *final_label_buffer = malloc(final_label_buffer_size);
 
-  strcpy(file_path_buffer_end, "model_name");
-  /* printf("%s\n", file_path_buffer); */
-  if ((model_file = fopen(file_path_buffer, "r")) != NULL) {
-    fgets(model_name, 30, model_file);
-    remove_newline(model_name);
-    strcat(model_name, ": ");
-    *label = model_name;
+    strcpy(file_path_buffer_end, "model_name");
+    /* printf("%s\n", file_path_buffer); */
+    if ((model_file = fopen(file_path_buffer, "r")) != NULL) {
+      fgets(model_name, sizeof(model_name), model_file);
+      remove_newline(model_name);
+      /* strcat(model_name, ": "); */
+    }
+
+    snprintf(final_label_buffer, final_label_buffer_size, *label, model_name);
+
+    *label = final_label_buffer;
   }
 
   return battery;
