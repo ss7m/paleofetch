@@ -816,7 +816,7 @@ int main(int argc, char *argv[]) {
                 printf(COLOR"%s%s\e[0m%s\n", LOGO[i], c.label, value); // just print if not empty
             } else {
                 if (strcmp(c.label, "SPACER") != 0) { // check if label is SPACER, otherwise not a spacer
-                    ++offset; // print next line of informati
+                    ++offset; // print next line of information
                     free(value); // free memory allocated for empty value
                     i--;
                     continue;
