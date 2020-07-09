@@ -180,6 +180,31 @@ static char *get_os() {
     return os;
 }
 
+static int *get_os_num() {
+  char *os = malloc(BUF_SIZE),
+       *name = malloc(BUF_SIZE),
+       *line = NULL;
+  size_t len;
+  FILE *os_release_bedrock = fopen("/bedrock/etc/os-release", "r");
+  FILE *os_release_etc = fopen("/etc/os-release", "r");
+
+  if(os_release_bedrock != NULL) {
+      while (getline(&line, &len, os_release_bedrock) != -1) {
+          if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+      }
+      fclose(os_release_bedrock);
+  } else if(os_release_etc != NULL) {
+      while (getline(&line, &len, os_release_etc) != -1) {
+          if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+      }
+      fclose(os_release_etc);
+  } else {
+          status = -1;
+      halt_and_catch_fire("unable to open /etc/os-release");
+  }
+  return 1;
+}
+
 static char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
     strncpy(kernel, uname_info.release, BUF_SIZE);
@@ -765,13 +790,7 @@ int main(int argc, char *argv[]) {
     FILE *cache_file;
     int read_cache;
 
-    #define os get_os()
-
-    if (strstr(os, "Arch Linux") != NULL) {
-        #define COLOR "\e[1;36m"
-    } else if (strstr(os, "Bedrock Linux") != NULL) {
-        #define COLOR "\e[0;90m"
-    }
+    #define COLOR "\e[1;36m"
 
     status = uname(&uname_info);
     halt_and_catch_fire("uname failed");
@@ -796,8 +815,7 @@ int main(int argc, char *argv[]) {
     }
 
     int offset = 0;
-    // #define LOGO logo_picker("Bedrock Linux")
-    #define LOGO ARCH_LOGO
+
 
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
