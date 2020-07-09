@@ -180,30 +180,6 @@ static char *get_os() {
     return os;
 }
 
-static int *get_os_num() {
-  char *os = malloc(BUF_SIZE),
-       *name = malloc(BUF_SIZE),
-       *line = NULL;
-  size_t len;
-  FILE *os_release_bedrock = fopen("/bedrock/etc/os-release", "r");
-  FILE *os_release_etc = fopen("/etc/os-release", "r");
-
-  if(os_release_bedrock != NULL) {
-      while (getline(&line, &len, os_release_bedrock) != -1) {
-          if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
-      }
-      fclose(os_release_bedrock);
-  } else if(os_release_etc != NULL) {
-      while (getline(&line, &len, os_release_etc) != -1) {
-          if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
-      }
-      fclose(os_release_etc);
-  } else {
-          status = -1;
-      halt_and_catch_fire("unable to open /etc/os-release");
-  }
-  return 1;
-}
 
 static char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
