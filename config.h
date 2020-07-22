@@ -1,5 +1,6 @@
-#include "logos/arch.h"
-#define COLOR "\e[1;36m"
+// #include "logos/arch.h"
+// #include "logos/bedrock.h"
+#define COLOR
 
 #define CONFIG \
 { \
@@ -12,7 +13,7 @@
     { "Uptime: ",     get_uptime,              false }, \
     { "Battery: ",    get_battery_percentage,  false }, \
     SPACER \
-    { "Packages: ",   get_packages_pacman,   false }, \
+    { "Packages: ",   get_packages,   false }, \
     { "Shell: ",      get_shell,             false }, \
     { "Resolution: ", get_resolution,        false }, \
     { "Terminal: ",   get_terminal,          false }, \

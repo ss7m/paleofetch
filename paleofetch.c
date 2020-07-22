@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <sys/utsname.h>
@@ -15,9 +16,10 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
-
+#include <spawn.h>
 #include "paleofetch.h"
 #include "config.h"
+#include "logos.h"
 
 #define BUF_SIZE 150
 #define COUNT(x) (int)(sizeof x / sizeof *x)
@@ -153,23 +155,31 @@ static char *get_os() {
          *name = malloc(BUF_SIZE),
          *line = NULL;
     size_t len;
-    FILE *os_release = fopen("/etc/os-release", "r");
-    if(os_release == NULL) {
-        status = -1;
+    FILE *os_release_bedrock = fopen("/bedrock/etc/os-release", "r");
+    FILE *os_release_etc = fopen("/etc/os-release", "r");
+
+    if(os_release_bedrock != NULL) {
+        while (getline(&line, &len, os_release_bedrock) != -1) {
+            if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+        }
+        fclose(os_release_bedrock);
+    } else if(os_release_etc != NULL) {
+        while (getline(&line, &len, os_release_etc) != -1) {
+            if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
+        }
+        fclose(os_release_etc);
+    } else {
+            status = -1;
         halt_and_catch_fire("unable to open /etc/os-release");
     }
 
-    while (getline(&line, &len, os_release) != -1) {
-        if (sscanf(line, "NAME=\"%[^\"]+", name) > 0) break;
-    }
-
     free(line);
-    fclose(os_release);
     snprintf(os, BUF_SIZE, "%s %s", name, uname_info.machine);
     free(name);
 
     return os;
 }
+
 
 static char *get_kernel() {
     char *kernel = malloc(BUF_SIZE);
@@ -222,7 +232,7 @@ static char *get_uptime() {
     char *uptime = malloc(BUF_SIZE);
     for (int i = 0; i < 3; ++i ) {
         if ((n = seconds / units[i].secs) || i == 2) /* always print minutes */
-            len += snprintf(uptime + len, BUF_SIZE - len, 
+            len += snprintf(uptime + len, BUF_SIZE - len,
                             "%d %s%s, ", n, units[i].name, n != 1 ? "s": "");
         seconds %= units[i].secs;
     }
@@ -263,33 +273,100 @@ static char *get_battery_percentage() {
   return battery;
 }
 
-static char *get_packages(const char* dirname, const char* pacname, int num_extraneous) {
-    int num_packages = 0;
-    DIR * dirp;
-    struct dirent *entry;
-
-    dirp = opendir(dirname);
-
-    if(dirp == NULL) {
-        status = -1;
-        halt_and_catch_fire("You may not have %s installed", dirname);
+void removeSubstr (char *string, char *sub) {
+    char *match = string;
+    int len = strlen(sub);
+    while ((match = strstr(match, sub))) {
+        *match = '\0';
+        strcat(string, match+len);
+                match++;
     }
-
-    while((entry = readdir(dirp)) != NULL) {
-        if(entry->d_type == DT_DIR) num_packages++;
-    }
-    num_packages -= (2 + num_extraneous); // accounting for . and ..
-
-    status = closedir(dirp);
-
-    char *packages = malloc(BUF_SIZE);
-    snprintf(packages, BUF_SIZE, "%d (%s)", num_packages, pacname);
-
-    return packages;
 }
 
-static char *get_packages_pacman() {
-    return get_packages("/var/lib/pacman/local", "pacman", 0);
+static char *per_pac(const char* paccmd_input, const char* pkgman_name, const char* prev_msg) {
+    char test_out[1035];
+    char *test_cmd = malloc(BUF_SIZE);
+    int fail = 1;
+    char *binary;
+
+
+    if (pkgman_name == "dpkg") {
+        binary = "dpkg-query";
+    } else if (pkgman_name == "xbps") {
+        binary = "xbps-query";
+    } else if (pkgman_name == "sorcery") {
+        binary = "gaze";
+    } else {
+        binary = pkgman_name;
+    }
+
+
+    strcpy(test_cmd, "which ");
+    strcat(test_cmd, binary);
+    strcat(test_cmd, """ 2>/dev/null""");
+
+    FILE* test = popen(test_cmd, "r");
+
+    while (fgets(test_out, sizeof(test_out), test) != NULL) {
+        if (strstr(test_out, "which: no ") == NULL) {
+            fail = 0;
+        }
+    }
+    pclose(test);
+    free(test_cmd);
+
+    if (fail == 0) {
+        char out[1035];
+        char *paccommand = malloc(BUF_SIZE);
+        strcpy(paccommand, paccmd_input);
+        strcat(paccommand, """ 2>/dev/null""");
+        FILE* fp = popen(paccommand, "r");
+
+        int num_packages = 0;
+        while (fgets(out, sizeof(out), fp) != NULL) {
+            num_packages = num_packages + 1;
+        }
+        pclose(fp);
+
+        char *output_msg = malloc(BUF_SIZE);
+        if (num_packages != 0) {
+          if (prev_msg != "no package managers here") {
+              snprintf(output_msg, BUF_SIZE, "%s %d (%s)", prev_msg, num_packages, pkgman_name);
+              return output_msg;
+          } else if (prev_msg == "no package managers here") {
+              snprintf(output_msg, BUF_SIZE, "%d (%s)", num_packages, pkgman_name);
+              return output_msg;
+          }
+        } else {
+            return prev_msg;
+        }
+
+    } else if (fail == 1) {
+        return prev_msg;
+    }
+}
+
+
+static char *get_packages() {
+    char *pac_msg = calloc("no package managers here", BUF_SIZE);
+    pac_msg = per_pac("kiss -l", "kiss", pac_msg);
+    pac_msg = per_pac("pacman -Qq --color never", "pacman", pac_msg);
+    pac_msg = per_pac("dpkg-query -f '.\n' -W", "dpkg", pac_msg);
+    pac_msg = per_pac("rpm -qa", "rpm", pac_msg);
+    pac_msg = per_pac("xbps-query -l", "xbps", pac_msg);
+    pac_msg = per_pac("apk info", "apk", pac_msg);
+    pac_msg = per_pac("opkg list-installed", "opkg", pac_msg);
+    pac_msg = per_pac("pacman-g2 -Q", "pacman-g2", pac_msg);
+    pac_msg = per_pac("lvu installed", "lvu", pac_msg);
+    pac_msg = per_pac("tce-status -i", "tce-status", pac_msg);
+    pac_msg = per_pac("pkg_info", "pkg_info", pac_msg);
+    pac_msg = per_pac("tazpkg list", "tazpkg", pac_msg);
+    pac_msg = per_pac("gaze installed", "sorcery", pac_msg);
+    pac_msg = per_pac("alps showinstalled", "alps", pac_msg);
+    pac_msg = per_pac("butch list", "butch", pac_msg);
+    pac_msg = per_pac("mine -q", "mine", pac_msg);
+    removeSubstr(pac_msg, "(null) ");
+    return pac_msg;
 }
 
 static char *get_shell() {
@@ -301,17 +378,16 @@ static char *get_shell() {
         strncpy(shell, shell_path, BUF_SIZE); /* copy the whole thing over */
     else
         strncpy(shell, shell_name + 1, BUF_SIZE); /* o/w copy past the last '/' */
-
     return shell;
 }
 
 static char *get_resolution() {
     int screen, width, height;
     char *resolution = malloc(BUF_SIZE);
-    
+
     if (display != NULL) {
         screen = DefaultScreen(display);
-    
+
         width = DisplayWidth(display, screen);
         height = DisplayHeight(display, screen);
 
@@ -324,7 +400,7 @@ static char *get_resolution() {
         FILE *modes;
         char *line = NULL;
         size_t len;
-        
+
         /* preload resolution with empty string, in case we cant find a resolution through parsing */
         strncpy(resolution, "", BUF_SIZE);
 
@@ -354,7 +430,7 @@ static char *get_resolution() {
                 }
             }
         }
-        
+
         closedir(dir);
     }
 
@@ -366,10 +442,10 @@ static char *get_terminal() {
     char *terminal = malloc(BUF_SIZE);
 
     /* check if xserver is running or if we are running in a straight tty */
-    if (display != NULL) {   
+    if (display != NULL) {
 
     unsigned long _, // not unused, but we don't need the results
-                  window = RootWindow(display, XDefaultScreen(display));    
+                  window = RootWindow(display, XDefaultScreen(display));
         Atom a,
              active = XInternAtom(display, "_NET_ACTIVE_WINDOW", True),
              class = XInternAtom(display, "WM_CLASS", True);
@@ -690,6 +766,8 @@ int main(int argc, char *argv[]) {
     FILE *cache_file;
     int read_cache;
 
+    #define COLOR "\e[1;36m"
+
     status = uname(&uname_info);
     halt_and_catch_fire("uname failed");
     status = sysinfo(&my_sysinfo);
@@ -713,6 +791,7 @@ int main(int argc, char *argv[]) {
     }
 
     int offset = 0;
+
 
     for (int i = 0; i < COUNT(LOGO); i++) {
         // If we've run out of information to show...
@@ -748,7 +827,7 @@ int main(int argc, char *argv[]) {
 
     free(cache);
     free(cache_data);
-    if(display != NULL) { 
+    if(display != NULL) {
         XCloseDisplay(display);
     }
 
