@@ -23,6 +23,7 @@
     SPACER \
     { "",             get_colors1,             false }, \
     { "",             get_colors2,             false }, \
+    { "",             get_name,              false }, \
 }
 
 #define CPU_CONFIG \
