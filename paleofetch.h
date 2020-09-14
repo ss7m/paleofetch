@@ -21,6 +21,7 @@ static char *get_title(),
             *get_colors1(),
             *get_colors2(),
             *spacer();
+            *get_name();
 
 #define SPACER {"", spacer, false},
 #define REMOVE(A) { (A), NULL, sizeof(A) - 1 , 0 }
