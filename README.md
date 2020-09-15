@@ -99,6 +99,7 @@ FAQ
 ---
 
 Q: Do you really run neofetch every time you open a terminal?  
+
 A: Yes, I like the way it looks and like that it causes my prompt to start midway
 down the screen. I do acknowledge that the information it presents is not actually useful.
 
