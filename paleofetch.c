@@ -632,7 +632,7 @@ static char *get_colors2() {
 }
 static char *get_pcname(){
         char pc_name[1024] // I doubt anyone has a PC with a name over 1024 charectors.
-        FILE *fp_pcname = fopen("./config_scripts/pc_name.txt","r"); // open the file as fp_pcname
+        FILE *fp_pcname = fopen("./config_scripts/pcname.txt","r"); // open the file as fp_pcname
         fscanf(fp_pcname,"%[^\n]",pc_name); // read pc name
         return *pc_name;
 }
