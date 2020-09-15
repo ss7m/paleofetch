@@ -77,7 +77,7 @@ which function paleofetch will call display. Current available getter functions 
 * `get_gpu1`, `get_gpu2`: Print the GPU on your system. If you don't have both integrated graphics and an external GPU, `get_gpu2` will likely be blank
 * `get_gpu`: (Tries to) print your current GPU
 * `get_colors1`, `get_colors2`: Prints the colors of your terminal
-* `get_pcname`,: Prints the PC name on the first line of ./config_scripts/pcname.txt
+* `get_pcname`: Prints the PC name on the first line of ./config_scripts/pcname.txt
 
 To include a blank line between entries, put `SPACER \` between the two lines
 you want to separate.
@@ -101,5 +101,6 @@ FAQ
 Q: Do you really run neofetch every time you open a terminal?  
 A: Yes, I like the way it looks and like that it causes my prompt to start midway
 down the screen. I do acknowledge that the information it presents is not actually useful.
+
 Q: I put a name in ./config_scripts/pcname.txt but it is not printing the name?
 A: You need to uncomment the line with `get_pcname()` in `paleofetch.h`.
