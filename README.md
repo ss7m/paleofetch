@@ -103,4 +103,5 @@ A: Yes, I like the way it looks and like that it causes my prompt to start midwa
 down the screen. I do acknowledge that the information it presents is not actually useful.
 
 Q: I put a name in ./config_scripts/pcname.txt but it is not printing the name?
+
 A: You need to uncomment the line with `get_pcname()` in `paleofetch.h`.
