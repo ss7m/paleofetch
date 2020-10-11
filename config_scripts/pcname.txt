@@ -1,2 +1,2 @@
 
-Put you computers name in the line above. If left blank with get_pcname() still in config.h, "PC name: " will still be printed, but nothing after that.
+Put your computers name in the line above. If left blank with get_pcname() still in config.h, "PC name: " will still be printed, but nothing after that.
