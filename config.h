@@ -23,6 +23,7 @@
     SPACER \
     { "",             get_colors1,             false }, \
     { "",             get_colors2,             false }, \
+    //{ "PC name: ",    get_pcname,              false }, \ //PC name  is commented out by default as it requires editing pcname.txt in config_scripts to add a name.
 }
 
 #define CPU_CONFIG \
