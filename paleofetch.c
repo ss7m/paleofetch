@@ -501,6 +501,7 @@ static char *find_gpu(int index) {
 
     while(dev != NULL) {
         pci_fill_info(dev, PCI_FILL_IDENT);
+        pci_fill_info(dev, PCI_FILL_CLASS);
         device_class = pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_CLASS, dev->device_class);
         if(strcmp("VGA compatible controller", device_class) == 0 || strcmp("3D controller", device_class) == 0) {
             strncpy(gpu, pci_lookup_name(pacc, buffer, sizeof(buffer), PCI_LOOKUP_DEVICE | PCI_LOOKUP_VENDOR, dev->vendor_id, dev->device_id), BUF_SIZE);
